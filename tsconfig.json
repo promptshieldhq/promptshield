@@ -1,0 +1,3 @@
+{
+  "extends": "@promptshield/config/tsconfig.base.json"
+}

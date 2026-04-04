@@ -1,0 +1,88 @@
+---
+title: Provider Setup
+description: Route requests to Gemini, OpenAI, Anthropic, Ollama, or any OpenAI-compatible endpoint.
+---
+
+Set `PROMPTSHIELD_PROVIDER` and your API key.
+
+## Gemini
+
+```bash
+PROMPTSHIELD_PROVIDER=gemini
+GEMINI_API_KEY=your-gemini-key
+PROMPTSHIELD_GEMINI_MODEL=gemini-2.0-flash
+```
+
+## OpenAI
+
+```bash
+PROMPTSHIELD_PROVIDER=openai
+OPENAI_API_KEY=your-openai-key
+PROMPTSHIELD_OPENAI_MODEL=gpt-4o-mini
+```
+
+## Anthropic
+
+```bash
+PROMPTSHIELD_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-api03-xxxx
+PROMPTSHIELD_ANTHROPIC_MODEL=claude-sonnet-4-5
+```
+
+## Ollama / self-hosted
+
+```bash
+PROMPTSHIELD_PROVIDER=selfhosted
+PROMPTSHIELD_UPSTREAM_URL=http://localhost:11434/v1
+PROMPTSHIELD_SELFHOSTED_MODEL=llama3.1:8b
+```
+
+No API key needed for local models.
+
+## Any OpenAI-compatible endpoint
+
+Together, Groq, Fireworks, Anyscale, or anything that speaks `/v1/chat/completions`.
+
+```bash
+PROMPTSHIELD_PROVIDER=openai-compatible
+PROMPTSHIELD_UPSTREAM_URL=https://api.together.xyz/v1
+PROMPTSHIELD_UPSTREAM_API_KEY=your-key
+PROMPTSHIELD_OPENAI_COMPATIBLE_MODEL=mistralai/Mixtral-8x7B-Instruct-v0.1
+```
+
+## Multi-provider mode
+
+Route each request to the right backend based on the model name in the request body. Set `PROMPTSHIELD_PROVIDERS` to a comma-separated list. The first entry is the fallback for unrecognised models.
+
+```bash
+PROMPTSHIELD_PROVIDERS=anthropic,openai,gemini
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=...
+```
+
+Built-in routing rules:
+
+| Model prefix | Provider |
+|---|---|
+| `claude-*` | Anthropic |
+| `gpt-*`, `o1*`, `o3*`, `o4*` | OpenAI |
+| `gemini-*` | Gemini |
+
+Override or add routes with `PROMPTSHIELD_MODEL_ROUTES`:
+
+```bash
+PROMPTSHIELD_MODEL_ROUTES=llama3=selfhosted,mistral=openai-compatible
+```
+
+## Model selection
+
+No default model. Set one via env var or pass `model` in every request.
+
+The `model` field in the request body takes priority. In multi-provider mode it also determines which backend handles the request.
+
+Resolution order:
+
+1. `model` in the request body
+2. `PROMPTSHIELD_MODEL` : global override
+3. Provider-specific env var (`PROMPTSHIELD_GEMINI_MODEL`, `PROMPTSHIELD_OPENAI_MODEL`, etc.)

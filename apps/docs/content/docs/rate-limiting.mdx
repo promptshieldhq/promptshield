@@ -1,0 +1,29 @@
+---
+title: Rate Limiting
+description: Token-bucket rate limiting per IP or API key. Off by default.
+---
+
+Add a `rate_limit` block to `config/policy.yaml` to enable:
+
+```yaml
+rate_limit:
+  requests_per_minute: 60   # token refill rate
+  burst: 10                 # max tokens available at once
+  key_by: ip                # ip | api_key
+```
+
+Remove the block to disable entirely. No config means no overhead.
+
+## key_by
+
+**`ip`**: one bucket per client IP. Reads `X-Real-IP` when behind a reverse proxy. `X-Forwarded-For` is ignored because clients can spoof it.
+
+**`api_key`**: one bucket per key from `x-llm-api-key` or `Authorization: Bearer`.
+
+## When limits are hit
+
+Returns `HTTP 429` before the upstream is called. Logged as `action: rate_limited` in the audit log.
+
+```json
+{"error": "rate limit exceeded"}
+```

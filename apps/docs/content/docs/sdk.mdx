@@ -1,0 +1,59 @@
+---
+title: SDK Integration
+description: Point your existing OpenAI SDK at the proxy. One line change.
+---
+
+PromptShield accepts the same request format as OpenAI's `/v1/chat/completions`. Point your SDK's `base_url` at the proxy. Nothing else changes.
+
+## Python
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8080/v1",
+    api_key="your-api-key",  # forwarded to the upstream provider
+)
+
+response = client.chat.completions.create(
+    model="gemini-2.0-flash",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+print(response.choices[0].message.content)
+```
+
+Streaming works the same way:
+
+```python
+with client.chat.completions.stream(
+    model="gemini-2.0-flash",
+    messages=[{"role": "user", "content": "Tell me a story"}],
+) as stream:
+    for chunk in stream:
+        print(chunk.choices[0].delta.content or "", end="", flush=True)
+```
+
+
+## The model field
+
+The `model` field in the request body is passed through to the upstream. It overrides the server-side default (`PROMPTSHIELD_MODEL`, `PROMPTSHIELD_GEMINI_MODEL`, etc.) for that request. In multi-provider mode it also controls which backend handles the request: `claude-*` goes to Anthropic, `gpt-*` to OpenAI, `gemini-*` to Gemini.
+
+## Passing API keys at request time
+
+Instead of storing keys in `.env` on the proxy server, pass them per-request via headers. The proxy checks these before falling back to environment variables:
+
+| Header | Used for |
+|--------|----------|
+| `x-llm-api-key` | Any provider |
+| `x-gemini-api-key` | Gemini only |
+| `x-openai-api-key` | OpenAI only |
+| `Authorization: Bearer <key>` | Any provider |
+
+```python
+client = OpenAI(
+    base_url="http://localhost:8080/v1",
+    api_key="user-supplied-key",  # sent as Authorization: Bearer
+)
+```
+
+Useful for multi-tenant apps where each user supplies their own key.

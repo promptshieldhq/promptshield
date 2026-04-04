@@ -1,0 +1,53 @@
+---
+title: PromptShield
+description: Open source LLM gateway. Scans every prompt and response for PII and secrets, enforces policy, and routes to any provider. Runs on your infrastructure.
+---
+
+Point your SDK at the proxy and it scans every prompt and response, enforces policy, and routes to your provider. No code changes.
+
+<img src="/images/architecture.png" alt="PromptShield architecture" style={{ display: 'block', margin: '0 auto' }} />
+
+## What it catches
+
+- **Secrets**: AWS keys, GitHub tokens, OpenAI keys, Stripe keys, Slack tokens, DB connection strings, private keys
+- **PII**: email, phone, SSN, credit card, IBAN, passport, medical license (30+ types)
+- **Responses**: scans LLM output before it reaches your app
+
+Block or mask per entity type. Policy is a YAML file in your repo.
+
+## Built to deploy your way
+
+Self-host it and your prompts never leave your servers. Full control, no vendor in the path. Works for regulated industries out of the box.
+
+Need a managed setup or help getting started? [Let's talk](mailto:contact@ajutamang.com).
+
+## Policy
+
+| Action | Behavior |
+|--------|----------|
+| `block` | HTTP 403. LLM never called. Zero tokens consumed. |
+| `mask` | PII replaced with `[ENTITY_TYPE]`. Sanitized prompt forwarded. |
+| `allow` | Passes through unchanged. |
+| `warn` | Logs and allows. Coming soon. |
+
+## Modes
+
+Set `PROMPTSHIELD_ENGINE_URL` to connect the detection engine.
+
+| | Proxy | Proxy + Engine |
+|---|:---:|:---:|
+| Rate limiting | ✓ | ✓ |
+| Token tracking | ✓ | ✓ |
+| Provider routing | ✓ | ✓ |
+| Audit logs | ✓ | ✓ |
+| Metrics | ✓ | ✓ |
+| Request scanning | | ✓ |
+| Policy enforcement | | ✓ |
+| Response scanning | | ✓ |
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart" description="Proxy running in one terminal session" />
+  <Card title="Secrets Detection" href="/docs/secrets" description="Block API keys, tokens, and credentials before the LLM sees them" />
+  <Card title="Policy" href="/docs/policy" description="Block, mask, or allow per entity type" />
+  <Card title="Providers" href="/docs/providers" description="Gemini, OpenAI, Anthropic, Ollama, any OpenAI-compatible endpoint" />
+</Cards>

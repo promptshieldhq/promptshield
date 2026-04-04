@@ -1,0 +1,61 @@
+---
+title: Environment Variables
+description: Every variable the proxy reads at startup.
+---
+
+Set in `.env` or as environment variables. Loaded once at startup.
+
+## Core
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PROMPTSHIELD_PORT` | `8080` | Port the proxy listens on |
+| `PROMPTSHIELD_PROVIDER` | `gemini` | Upstream provider: `gemini` \| `openai` \| `anthropic` \| `openai-compatible` \| `selfhosted` |
+| `PROMPTSHIELD_UPSTREAM_URL` | provider default | Override the upstream base URL |
+| `PROMPTSHIELD_CHAT_ROUTE` | `/v1/chat/completions` | Inbound route path |
+| `PROMPTSHIELD_POLICY_PATH` | `config/policy.yaml` | Path to the policy file |
+
+## Detection engine
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PROMPTSHIELD_ENGINE_URL` | | URL of the detection engine (`http://localhost:4321`). Unset means gateway mode. |
+
+## Model selection
+
+No default model. Set one via env var or pass `model` in every request.
+
+| Variable | Description |
+|----------|-------------|
+| `PROMPTSHIELD_MODEL` | Global override. Takes priority over all per-provider vars. |
+| `PROMPTSHIELD_GEMINI_MODEL` | Model for `gemini` provider |
+| `PROMPTSHIELD_OPENAI_MODEL` | Model for `openai` provider |
+| `PROMPTSHIELD_ANTHROPIC_MODEL` | Model for `anthropic` provider |
+| `PROMPTSHIELD_SELFHOSTED_MODEL` | Model for `selfhosted` provider |
+| `PROMPTSHIELD_OPENAI_COMPATIBLE_MODEL` | Model for `openai-compatible` provider |
+
+## Multi-provider routing
+
+| Variable | Description |
+|----------|-------------|
+| `PROMPTSHIELD_PROVIDERS` | Comma-separated providers for model-based routing, e.g. `anthropic,openai,gemini`. First entry is the fallback. |
+| `PROMPTSHIELD_MODEL_ROUTES` | Override built-in routing rules, e.g. `llama3=selfhosted,mistral=openai-compatible` |
+
+## API keys
+
+| Variable | Description |
+|----------|-------------|
+| `PROMPTSHIELD_UPSTREAM_API_KEY` | Global key fallback (any provider) |
+| `GEMINI_API_KEY` | Gemini |
+| `OPENAI_API_KEY` | OpenAI |
+| `ANTHROPIC_API_KEY` | Anthropic |
+| `SELFHOSTED_API_KEY` | Self-hosted endpoint (optional) |
+
+## TLS
+
+Set both or neither. Setting one without the other is a startup error.
+
+| Variable | Description |
+|----------|-------------|
+| `PROMPTSHIELD_TLS_CERT` | Path to TLS certificate (PEM) |
+| `PROMPTSHIELD_TLS_KEY` | Path to TLS private key (PEM) |

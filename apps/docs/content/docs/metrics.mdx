@@ -1,0 +1,61 @@
+---
+title: Prometheus Metrics
+description: Built-in exporter on /metrics. Same port as the proxy. No extra process.
+---
+
+Uses `prometheus/client_golang`. No flag to enable it.
+
+```bash
+curl http://localhost:8080/metrics
+```
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `promptshield_requests_total` | Counter | `action`, `provider`, `model` | Every request, labeled by outcome |
+| `promptshield_request_duration_seconds` | Histogram | `action`, `provider`, `model` | End-to-end latency including the upstream LLM |
+| `promptshield_tokens_total` | Counter | `token_type`, `provider`, `model` | Token counts; `token_type` is `prompt`, `completion`, or `total` |
+| `promptshield_entities_detected_total` | Counter | `entity_type`, `provider` | PII entities detected by the detection engine |
+| `promptshield_injections_detected_total` | Counter | `provider`, `model` | Injection attempts detected. Always 0 until injection detection ships. |
+| `promptshield_response_scans_total` | Counter | `provider`, `model` | LLM responses scanned |
+
+`action` values: `allow` `mask` `block` `rate_limited` `error`
+
+Duration histogram buckets: 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s, 10s, 30s, 60s.
+
+The entity, injection, and scan counters are zero in gateway mode (no detection engine).
+
+## Scrape config
+
+```yaml
+scrape_configs:
+  - job_name: promptshield
+    static_configs:
+      - targets: ["localhost:8080"]
+    scrape_interval: 15s
+```
+
+The pre-configured Prometheus + Grafana stack is in `infra/observability/`. See [Grafana](/docs/grafana).
+
+## PromQL
+
+```text
+# Request rate by action
+rate(promptshield_requests_total[5m])
+
+# p95 latency
+histogram_quantile(0.95, sum by (le) (rate(promptshield_request_duration_seconds_bucket[5m])))
+
+# Block rate
+rate(promptshield_requests_total{action="block"}[5m])
+/ rate(promptshield_requests_total[5m]) * 100
+
+# Token burn per model (tokens/min)
+sum by (model) (rate(promptshield_tokens_total{token_type="total"}[5m])) * 60
+
+# PII detections by entity type
+rate(promptshield_entities_detected_total[5m])
+
+# Error rate
+rate(promptshield_requests_total{action="error"}[5m])
+/ rate(promptshield_requests_total[5m]) * 100
+```

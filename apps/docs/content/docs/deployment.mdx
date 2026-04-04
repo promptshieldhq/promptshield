@@ -1,0 +1,38 @@
+---
+title: Production Deployment
+description: One command to install PromptShield as a hardened systemd service on Linux.
+---
+
+`sudo make install` does everything: builds the binary, creates a dedicated `promptshield` system user, installs to `/usr/local/bin`, copies config to `/etc/promptshield`, installs the systemd unit, and enables it on boot.
+
+```bash
+sudo make install
+
+# Review and edit the config before starting:
+sudo nano /etc/promptshield/.env
+
+sudo systemctl start promptshield
+sudo systemctl status promptshield
+
+# Tail the audit log:
+journalctl -u promptshield -f
+```
+
+## Uninstall
+
+```bash
+sudo make uninstall
+# Removes the binary and service.
+# Config at /etc/promptshield is preserved.
+```
+
+## Building from source
+
+```bash
+make build   # produces bin/promptshield
+make run     # dev mode with go run
+make test    # go test -race ./...
+make tidy    # go mod tidy
+```
+
+**Requirements:** Go 1.22+

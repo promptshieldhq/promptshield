@@ -1,0 +1,88 @@
+---
+title: Troubleshooting
+description: Common issues and how to fix them.
+---
+
+## Proxy won't start
+
+**Symptom:** `make run` exits immediately or fails.
+
+Check your `.env` has a valid provider and API key:
+
+```bash
+PROMPTSHIELD_PROVIDER=gemini
+GEMINI_API_KEY=your-key
+```
+
+Run `curl -s http://localhost:8080/health` to confirm the process is up.
+
+---
+
+## Engine not connecting
+
+**Symptom:** Requests pass through without scanning. Audit logs show no entities detected.
+
+Check the engine is running:
+
+```bash
+curl -s http://localhost:4321/health
+```
+
+Check `PROMPTSHIELD_ENGINE_URL` is set in the proxy `.env`:
+
+```bash
+PROMPTSHIELD_ENGINE_URL=http://localhost:4321
+```
+
+Restart the proxy after changing `.env`.
+
+---
+
+## Provider auth failure
+
+**Symptom:** Requests return `401` or `403` from upstream.
+
+- Confirm the API key matches the provider set in `PROMPTSHIELD_PROVIDER`
+- Check for leading/trailing whitespace in `.env` values
+- Verify the key has not expired or been revoked
+
+---
+
+## Policy not enforced
+
+**Symptom:** Requests with PII or secrets are not blocked or masked.
+
+- Confirm the engine is running and connected (see above)
+- Check `PROMPTSHIELD_POLICY_PATH` points to the right file (default: `config/policy.yaml`)
+- Confirm the entity type is listed in the policy file with the correct action
+- Check `on_detector_error` — if set to `fail_open`, errors silently allow requests through
+
+---
+
+## Rate limiting not triggering
+
+**Symptom:** Requests exceed configured limits without being rejected.
+
+- Rate limiting requires `rate_limit` to be configured in `config/policy.yaml`
+- Confirm `key_by` is set correctly (`ip` or `api_key`)
+- Restart the proxy after changing the policy file
+
+---
+
+## Request blocked unexpectedly
+
+**Symptom:** Legitimate requests return HTTP 403.
+
+Check the audit log for the blocked request:
+
+```bash
+# The log line will include the detected entities and action
+```
+
+If a false positive, adjust the policy action for that entity type to `mask` or `allow` in `config/policy.yaml`.
+
+---
+
+## Still stuck?
+
+Open an issue at [github.com/promptshieldhq/promptshield-proxy](https://github.com/promptshieldhq/promptshield-proxy/issues) or [reach out](mailto:contact@ajutamang.com).

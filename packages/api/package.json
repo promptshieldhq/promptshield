@@ -1,0 +1,27 @@
+{
+  "name": "@promptshield/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@promptshield/auth": "workspace:*",
+    "@promptshield/db": "workspace:*",
+    "@promptshield/env": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@promptshield/config": "workspace:*",
+    "hono": "catalog:",
+    "typescript": "^5"
+  }
+}

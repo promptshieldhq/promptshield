@@ -1,0 +1,52 @@
+---
+title: Engine
+description: Setup guide for the PromptShield detection engine.
+---
+
+The detection engine is a Python service. It scans prompts and responses for PII and secrets, and returns results to the proxy for policy enforcement.
+
+Run it alongside the proxy. The proxy works without it but no scanning or policy enforcement happens.
+
+## Requirements
+
+- Python 3.10+
+
+## Install
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield-engine
+cd promptshield-engine
+
+uv sync
+```
+
+## Run
+
+```bash
+uv run uvicorn main:app --port 4321
+```
+
+The engine listens on `:4321` by default.
+
+## Connect to the proxy
+
+Add to the proxy `.env` and restart:
+
+```bash
+PROMPTSHIELD_ENGINE_URL=http://localhost:4321
+```
+
+The proxy will now scan every request before forwarding to the LLM and every response on the way back.
+
+## Verify
+
+```bash
+curl -s http://localhost:4321/health
+```
+
+## What it detects
+
+- **Secrets**: AWS keys, GitHub tokens, OpenAI keys, Stripe keys, Slack tokens, DB connection strings, private keys
+- **PII**: email, phone, SSN, credit card, IBAN, passport, medical license (30+ types)
+
+See [Secrets Detection](/docs/secrets) and [Policy](/docs/policy) for configuration.

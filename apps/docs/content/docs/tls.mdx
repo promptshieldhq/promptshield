@@ -1,0 +1,62 @@
+---
+title: TLS / HTTPS
+description: Three production-ready TLS options. Pick the one that fits your stack.
+---
+
+## Option 1: Caddy (recommended)
+
+Caddy fetches and auto-renews Let's Encrypt certificates. Zero cert management. Just edit the domain name.
+
+```bash
+# Install Caddy: https://caddyserver.com/docs/install
+sudo cp infra/caddy/Caddyfile /etc/caddy/Caddyfile
+# Edit the domain, then:
+sudo systemctl reload caddy
+```
+
+The included `infra/caddy/Caddyfile` sets `flush_interval -1` so SSE streaming works correctly.
+
+## Option 2: nginx + certbot
+
+```bash
+sudo cp infra/nginx/nginx.conf /etc/nginx/sites-available/promptshield
+sudo ln -s /etc/nginx/sites-available/promptshield /etc/nginx/sites-enabled/promptshield
+
+# Edit the domain name, then:
+sudo certbot --nginx -d your.domain.com
+
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+The included `infra/nginx/nginx.conf` sets `proxy_buffering off`, which is required for SSE streaming to work.
+
+## Option 3: Native TLS on the proxy
+
+No reverse proxy at all. Works well for Kubernetes with cert-manager or internal deployments.
+
+```bash
+PROMPTSHIELD_TLS_CERT=/etc/letsencrypt/live/your.domain.com/fullchain.pem
+PROMPTSHIELD_TLS_KEY=/etc/letsencrypt/live/your.domain.com/privkey.pem
+```
+
+When both are set, the proxy calls `ListenAndServeTLS` at startup. When unset, it runs plaintext on `PROMPTSHIELD_PORT`.
+
+## Self-signed (development only)
+
+```bash
+openssl req -x509 -newkey rsa:4096 \
+  -keyout key.pem -out cert.pem \
+  -days 365 -nodes \
+  -subj "/CN=localhost"
+
+PROMPTSHIELD_TLS_CERT=cert.pem PROMPTSHIELD_TLS_KEY=key.pem make run
+```
+
+## Which one should I use?
+
+| Scenario | Pick |
+|----------|------|
+| VPS or bare metal with a public domain | **Caddy**: auto-renews, one config file |
+| Already running nginx | **nginx + certbot** |
+| Kubernetes or service mesh | **Native TLS** or delegate to the ingress controller |
+| Local dev or internal network | **Self-signed** |

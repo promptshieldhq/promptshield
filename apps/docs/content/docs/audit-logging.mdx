@@ -1,0 +1,65 @@
+---
+title: Audit Logging
+description: Every request emits one NDJSON line to stdout. Always on, no config required.
+---
+
+Every request writes one JSON line to stdout, regardless of outcome.
+
+```json
+{
+  "request_id": "a3f1c8e2b4d09f11",
+  "timestamp": "2025-03-12T10:23:45Z",
+  "action": "mask",
+  "provider": "gemini",
+  "model": "gemini-2.0-flash",
+  "client_ip": "203.0.113.42",
+  "injection_detected": false,
+  "entities_detected": ["EMAIL_ADDRESS"],
+  "reasons": ["masked PII entity detected: EMAIL_ADDRESS"],
+  "response_scanned": false,
+  "prompt_tokens": 28,
+  "completion_tokens": 95,
+  "total_tokens": 123,
+  "latency_ms": 812
+}
+```
+
+No PII or secrets appear in the log. `entities_detected` contains type names only (`EMAIL_ADDRESS` not the value, `SECRET_OPENAI_API_KEY` not the key).
+
+`action` values: `allow` `mask` `block` `rate_limited` `error`
+
+## Fields
+
+| Field | Description |
+|-------|-------------|
+| `request_id` | Unique ID for correlating across systems |
+| `action` | Final outcome |
+| `provider` / `model` | Upstream LLM |
+| `client_ip` | Caller IP |
+| `injection_detected` | Whether a prompt injection pattern was found. Always `false` until injection detection ships. |
+| `entities_detected` | PII and secret type names found (never the values) |
+| `reasons` | Why the action was taken |
+| `response_scanned` | Whether the LLM response was scanned on the way back |
+| `prompt_tokens` / `completion_tokens` / `total_tokens` | Counts from the upstream |
+| `latency_ms` | Total time including the upstream LLM call |
+
+`injection_detected`, `entities_detected`, and `response_scanned` are always present. The latter two are empty or false in gateway mode.
+
+## Forwarding logs
+
+PromptShield writes to stdout. Pipe it anywhere:
+
+```bash
+# Loki
+./bin/promptshield | promtail --stdin
+
+# CloudWatch
+./bin/promptshield | aws logs put-log-events ...
+
+# File
+./bin/promptshield >> /var/log/promptshield/audit.ndjson
+```
+
+In production the systemd service captures stdout automatically. Use `journalctl -u promptshield -f` to tail it live.
+
+The [Dashboard](/docs/dashboard) will add a searchable UI over the audit log when it ships. Until then, pipe stdout to a file or your log aggregator.

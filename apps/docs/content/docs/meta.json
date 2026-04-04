@@ -1,0 +1,33 @@
+{
+  "$schema": "../../.source/json-schema/docs.meta.json",
+  "title": "PromptShield",
+  "description": "Documentation for PromptShield",
+  "pages": [
+    "index",
+    "---Getting Started---",
+    "quickstart",
+    "---Components---",
+    "proxy",
+    "engine",
+    "sdk",
+    "providers",
+    "openclaw",
+    "---Dashboard---",
+    "dashboard",
+    "---Security---",
+    "secrets",
+    "policy",
+    "rate-limiting",
+    "---Observability---",
+    "audit-logging",
+    "metrics",
+    "grafana",
+    "---Deployment---",
+    "deployment",
+    "tls",
+    "environment-variables",
+    "---More---",
+    "troubleshooting",
+    "contributing"
+  ]
+}

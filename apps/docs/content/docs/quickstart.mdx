@@ -1,0 +1,114 @@
+---
+title: Quickstart
+description: Get the proxy and detection engine running locally in minutes.
+---
+
+By the end of this guide you'll have the proxy running, a request going through it, and the detection engine blocking a leaked API key.
+
+## 1. Run the proxy
+
+The proxy is a single Go binary. Build from source or download a release.
+
+**From source** (requires Go):
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield-proxy
+cd promptshield-proxy
+
+cp .env.example .env
+# set PROMPTSHIELD_PROVIDER and your API key
+
+make run
+# listening on :8080
+```
+
+**From a release binary:**
+
+Download the binary for your platform from [releases](https://github.com/promptshieldhq/promptshield-proxy/releases). Create a `.env` file in the same directory:
+
+```bash
+PROMPTSHIELD_PROVIDER=gemini
+GEMINI_API_KEY=your-key
+```
+
+Then run:
+
+```bash
+./promptshield-proxy
+# listening on :8080
+```
+
+Verify it's up:
+
+```bash
+curl -s http://localhost:8080/health
+# {"status":"ok","service":"promptshield-proxy"}
+```
+
+Rate limiting, audit logging, and metrics are on by default. No extra config needed.
+
+## 2. Send a request
+
+```bash
+curl -s -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model": "gemini-2.0-flash", "messages": [{"role": "user", "content": "Say hello"}]}'
+```
+
+The proxy routes the request to your configured provider and returns the response. No scanning yet, that requires the engine.
+
+## 3. Connect the detection engine
+
+The engine is a Python FastAPI service. In a second terminal:
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield-engine
+cd promptshield-engine
+
+uv sync
+uv run uvicorn main:app --port 4321
+```
+
+Add to the proxy `.env`:
+
+```bash
+PROMPTSHIELD_ENGINE_URL=http://localhost:4321
+```
+
+Restart the proxy (`make run` or `./promptshield-proxy`). The proxy will now scan every request and response through the engine before acting on them.
+
+Policy actions are configured in `config/policy.yaml`. See [Policy](/docs/policy).
+
+## 4. Test detection
+
+Send a prompt containing a leaked API key:
+
+```bash
+curl -s -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gemini-2.0-flash",
+    "messages": [{
+      "role": "user",
+      "content": "Why is my app broken?\n\nOPENAI_API_KEY=sk-proj-abc123\nDB_URL=postgres://admin:pass@prod.db/app"
+    }]
+  }'
+# {"error": "request blocked: secret detected in prompt"}
+```
+
+The LLM was never called. See [Secrets Detection](/docs/secrets) for the full list of detected types.
+
+## Services
+
+| Service | Address | Notes |
+|---------|---------|-------|
+| Proxy | `:8080` | Rate limiting, routing, audit logging |
+| Metrics | `:8080/metrics` | Always on |
+| Detection engine | `:4321` | Scanning and policy enforcement |
+
+## Next steps
+
+- [Providers](/docs/providers) : configure Gemini, OpenAI, Anthropic, Ollama
+- [Policy](/docs/policy) : block, mask, or allow by entity type
+- [SDK integration](/docs/sdk) : point `base_url` at the proxy
+- [Grafana](/docs/grafana) : full observability stack in one command

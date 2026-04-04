@@ -1,0 +1,54 @@
+---
+title: OpenClaw
+description: Run PromptShield as the proxy between OpenClaw and your LLM provider.
+---
+
+OpenClaw supports custom providers via `openclaw.json`. Point it at PromptShield and every request gets scanned, rate limited, and logged before it reaches the LLM.
+
+```
+OpenClaw → PromptShield (:8080) → Anthropic / OpenAI / Gemini
+```
+
+## 1. Configure the proxy
+
+Set your provider and key in `.env`:
+
+```bash
+PROMPTSHIELD_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-api03-xxxx
+```
+
+For multi-provider routing, see [Providers](/docs/providers).
+
+Then start the proxy:
+
+```bash
+make run
+```
+
+## 2. Configure OpenClaw
+
+Edit `~/.openclaw/openclaw.json`:
+
+```json
+{
+  "models": {
+    "providers": {
+      "promptshield": {
+        "baseUrl": "http://localhost:8080/v1",
+        "apiKey": "local",
+        "api": "openai-completions"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "promptshield/claude-sonnet-4-5"
+      }
+    }
+  }
+}
+```
+
+`apiKey` is a placeholder — the proxy holds the real upstream key. Copy from [`examples/openclaw.json`](https://github.com/promptshieldhq/promptshield-proxy/blob/main/examples/openclaw.json).
