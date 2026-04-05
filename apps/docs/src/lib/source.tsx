@@ -2,7 +2,7 @@ import { InferPageType, loader } from 'fumadocs-core/source';
 import { docs } from 'collections/server';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { statusBadgesPlugin } from 'fumadocs-core/source/status-badges';
-import { docsContentRoute, docsRoute } from './shared';
+import { docsContentRoute, docsImageRoute, docsRoute, siteUrl } from './shared';
 
 export const source = loader({
   source: docs.toFumadocsSource(),
@@ -33,6 +33,14 @@ export const source = loader({
     }),
   ],
 });
+
+export function getPageImageUrl(page: InferPageType<typeof source>) {
+  const segments = [...page.slugs, 'image.png'];
+  return {
+    segments,
+    url: `${siteUrl}${docsImageRoute}/${segments.join('/')}`,
+  };
+}
 
 export function getPageMarkdownUrl(page: InferPageType<typeof source>) {
   const segments = [...page.slugs, 'content.md'];
