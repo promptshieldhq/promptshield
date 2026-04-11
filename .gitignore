@@ -10,7 +10,10 @@ build
 
 # Environment variables
 .env
-.env*.local
+.env.local
+
+# Runtime-generated proxy config (API keys written by the dashboard)
+config/proxy.env
 
 # IDEs and editors
 .vscode/*

@@ -6,7 +6,7 @@ Built with [Fumadocs](https://fumadocs.vercel.app) on TanStack Start.
 
 ## Structure
 
-```
+```text
 apps/docs/
 ├── content/docs/       # MDX content files
 │   └── meta.json       # Navigation order and section labels
