@@ -8,10 +8,9 @@ cd infra/observability
 docker compose up -d
 ```
 
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Grafana | http://localhost:3001 | `admin` / `changeme` |
-| Prometheus | http://localhost:9090 | |
+| Service    | URL                   | Credentials          |
+| ---------- | --------------------- | -------------------- |
+| Grafana    | http://localhost:3001 | `admin` / `changeme` |
 
 Change credentials before exposing Grafana to a network:
 
@@ -24,6 +23,7 @@ GF_ADMIN_USER=youruser GF_ADMIN_PASSWORD=yourpassword docker compose up -d
 Datasource: Prometheus at `http://prometheus:9090`.
 
 Dashboard panels:
+
 - Request rate by action (allow / mask / block / error / rate_limited)
 - p50 / p95 / p99 end-to-end latency
 - Token burn by model and type (prompt / completion / total)
@@ -35,13 +35,13 @@ Dashboard panels:
 
 Five alert rules in `infra/observability/grafana/alerts.yml`:
 
-| Alert | Condition | Severity |
-|-------|-----------|----------|
-| `HighBlockRate` | Block rate > 15% over 5m | warning |
+| Alert                  | Condition                                          | Severity |
+| ---------------------- | -------------------------------------------------- | -------- |
+| `HighBlockRate`        | Block rate > 15% over 5m                           | warning  |
 | `SensitivePIIDetected` | Any `CREDIT_CARD`, `US_SSN`, or `IBAN_CODE` in 10m | critical |
-| `HighLatencyP95` | p95 latency > 5s for 3m | warning |
-| `ErrorRateHigh` | Error rate > 5% over 5m | critical |
-| `TokenSpikeByModel` | Any model > 10,000 tokens/min for 5m | warning |
+| `HighLatencyP95`       | p95 latency > 5s for 3m                            | warning  |
+| `ErrorRateHigh`        | Error rate > 5% over 5m                            | critical |
+| `TokenSpikeByModel`    | Any model > 10,000 tokens/min for 5m               | warning  |
 
 To route alerts to Slack, PagerDuty, or email, add an Alertmanager config alongside the docker-compose file.
 

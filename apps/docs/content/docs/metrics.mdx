@@ -9,14 +9,14 @@ Uses `prometheus/client_golang`. No flag to enable it.
 curl http://localhost:8080/metrics
 ```
 
-| Metric | Type | Labels | Description |
-|--------|------|--------|-------------|
-| `promptshield_requests_total` | Counter | `action`, `provider`, `model` | Every request, labeled by outcome |
-| `promptshield_request_duration_seconds` | Histogram | `action`, `provider`, `model` | End-to-end latency including the upstream LLM |
-| `promptshield_tokens_total` | Counter | `token_type`, `provider`, `model` | Token counts; `token_type` is `prompt`, `completion`, or `total` |
-| `promptshield_entities_detected_total` | Counter | `entity_type`, `provider` | PII entities detected by the detection engine |
-| `promptshield_injections_detected_total` | Counter | `provider`, `model` | Injection attempts detected. Always 0 until injection detection ships. |
-| `promptshield_response_scans_total` | Counter | `provider`, `model` | LLM responses scanned |
+| Metric                                   | Type      | Labels                            | Description                                                            |
+| ---------------------------------------- | --------- | --------------------------------- | ---------------------------------------------------------------------- |
+| `promptshield_requests_total`            | Counter   | `action`, `provider`, `model`     | Every request, labeled by outcome                                      |
+| `promptshield_request_duration_seconds`  | Histogram | `action`, `provider`, `model`     | End-to-end latency including the upstream LLM                          |
+| `promptshield_tokens_total`              | Counter   | `token_type`, `provider`, `model` | Token counts; `token_type` is `prompt`, `completion`, or `total`       |
+| `promptshield_entities_detected_total`   | Counter   | `entity_type`, `provider`         | PII entities detected by the detection engine                          |
+| `promptshield_injections_detected_total` | Counter   | `provider`, `model`               | Injection attempts detected. Always 0 until injection detection ships. |
+| `promptshield_response_scans_total`      | Counter   | `provider`, `model`               | LLM responses scanned                                                  |
 
 `action` values: `allow` `mask` `block` `rate_limited` `error`
 

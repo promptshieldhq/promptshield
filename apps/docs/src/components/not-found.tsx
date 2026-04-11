@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router';
+import { Link } from "@tanstack/react-router";
 
 export function NotFound() {
   return (
@@ -11,7 +11,7 @@ export function NotFound() {
       <div className="flex gap-3 mt-2">
         <Link
           to="/docs/$"
-          params={{ _splat: '' }}
+          params={{ _splat: "" }}
           className="px-4 py-2 rounded-lg bg-fd-primary text-fd-primary-foreground font-medium text-sm"
         >
           Go to Docs

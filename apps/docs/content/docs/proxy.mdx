@@ -68,12 +68,60 @@ Change `base_url` in your SDK. No other code changes needed.
 client = OpenAI(base_url="http://localhost:8080/v1", api_key="sk-...")
 ```
 
+## Admin API
+
+The proxy exposes an admin API for runtime configuration without restarts:
+
+**Requires authentication:**
+
+```bash
+PROXY_ADMIN_TOKEN=your-secret-token
+```
+
+### Get current config
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8080/admin/config
+```
+
+### Update configuration
+
+```bash
+curl -X PUT -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mode": "security",
+    "engineUrl": "http://localhost:4321",
+    "providerMode": "single",
+    "provider": "openai"
+  }' \
+  http://localhost:8080/admin/config
+```
+
+### Get policy
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8080/admin/policy
+```
+
+### Update policy (hot-reload)
+
+```bash
+curl -X PUT -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/yaml" \
+  --data-binary @config/policy.yaml \
+  http://localhost:8080/admin/policy
+```
+
 ## Connect the detection engine
 
 Set in `.env` and restart:
 
 ```bash
 PROMPTSHIELD_ENGINE_URL=http://localhost:4321
+PROMPTSHIELD_ENGINE_API_KEY=your-engine-key
 ```
 
 Without this the proxy runs in gateway mode: routing, rate limiting, and observability only. See [Engine](/docs/engine) for setup.

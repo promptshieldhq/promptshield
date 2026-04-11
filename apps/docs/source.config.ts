@@ -1,11 +1,10 @@
-import { applyMdxPreset, defineConfig, defineDocs } from 'fumadocs-mdx/config';
-import lastModified from 'fumadocs-mdx/plugins/last-modified';
-import jsonSchema from 'fumadocs-mdx/plugins/json-schema';
-import { pageSchema } from 'fumadocs-core/source/schema';
-import { z } from 'zod';
+import { applyMdxPreset, defineConfig, defineDocs } from "fumadocs-mdx/config";
+import jsonSchema from "fumadocs-mdx/plugins/json-schema";
+import { pageSchema } from "fumadocs-core/source/schema";
+import { z } from "zod";
 
 export const docs = defineDocs({
-  dir: 'content/docs',
+  dir: "content/docs",
   docs: {
     schema: pageSchema.extend({
       index: z.boolean().default(false),
@@ -14,15 +13,17 @@ export const docs = defineDocs({
       includeProcessedMarkdown: true,
     },
     async mdxOptions(environment) {
-      const { rehypeCodeDefaultOptions } = await import('fumadocs-core/mdx-plugins/rehype-code');
-      const { remarkSteps } = await import('fumadocs-core/mdx-plugins/remark-steps');
+      const { rehypeCodeDefaultOptions } =
+        await import("fumadocs-core/mdx-plugins/rehype-code");
+      const { remarkSteps } =
+        await import("fumadocs-core/mdx-plugins/remark-steps");
 
       return applyMdxPreset({
         rehypeCodeOptions: {
-          inline: 'tailing-curly-colon',
+          inline: "tailing-curly-colon",
           themes: {
-            light: 'github-light',
-            dark: 'github-dark',
+            light: "github-light",
+            dark: "github-dark",
           },
           transformers: [...(rehypeCodeDefaultOptions.transformers ?? [])],
         },
@@ -31,7 +32,7 @@ export const docs = defineDocs({
         },
         remarkNpmOptions: {
           persist: {
-            id: 'package-manager',
+            id: "package-manager",
           },
         },
         remarkPlugins: [remarkSteps],
@@ -41,8 +42,5 @@ export const docs = defineDocs({
 });
 
 export default defineConfig({
-  plugins: [
-    jsonSchema({ insert: true }),
-    lastModified(),
-  ],
+  plugins: [jsonSchema({ insert: true })],
 });

@@ -1,61 +1,223 @@
 ---
 title: Environment Variables
-description: Every variable the proxy reads at startup.
+description: Every environment variable across the proxy, detection engine, and dashboard, with cross-service connection notes.
 ---
 
-Set in `.env` or as environment variables. Loaded once at startup.
+This page covers all environment variables across all three PromptShield services.
 
-## Core
+## Shared secrets
+
+These values must be identical on both sides of a connection.
+
+| Secret | Set on (service A) | Must match (service B) |
+|---|---|---|
+| Engine API key | `PROMPTSHIELD_API_KEY` (engine) | `ENGINE_API_KEY` (dashboard) and `PROMPTSHIELD_ENGINE_API_KEY` (proxy) |
+| Proxy admin token | `PROXY_ADMIN_TOKEN` (proxy) | `PROXY_ADMIN_TOKEN` (dashboard) |
+| Audit ingest secret | `AUDIT_INGEST_SECRET` (dashboard) | `AUDIT_INGEST_SECRET` (proxy direct push) |
+
+<Callout type="info">
+The engine API key has three different variable names — one per service — because each service owns its own namespace. They must all carry the same value.
+</Callout>
+
+---
+
+## Proxy
+
+### Core
 
 | Variable | Default | Description |
-|----------|---------|-------------|
+|---|---|---|
 | `PROMPTSHIELD_PORT` | `8080` | Port the proxy listens on |
 | `PROMPTSHIELD_PROVIDER` | `gemini` | Upstream provider: `gemini` \| `openai` \| `anthropic` \| `openai-compatible` \| `selfhosted` |
-| `PROMPTSHIELD_UPSTREAM_URL` | provider default | Override the upstream base URL |
+| `PROMPTSHIELD_PROVIDERS` | — | Comma-separated list for multi-provider routing, e.g. `anthropic,openai,gemini`. First entry is the fallback. |
+| `PROMPTSHIELD_UPSTREAM_URL` | provider default | Override the upstream base URL (single-provider mode only) |
 | `PROMPTSHIELD_CHAT_ROUTE` | `/v1/chat/completions` | Inbound route path |
-| `PROMPTSHIELD_POLICY_PATH` | `config/policy.yaml` | Path to the policy file |
+| `PROMPTSHIELD_POLICY_PATH` | `config/policy.yaml` | Path to the policy YAML file |
+| `PROMPTSHIELD_ALLOW_DEFAULT_POLICY` | `false` | Allow startup with a default allow-all policy when the policy file is missing. **Unsafe in production.** |
 
-## Detection engine
+### Detection engine
 
 | Variable | Default | Description |
-|----------|---------|-------------|
-| `PROMPTSHIELD_ENGINE_URL` | | URL of the detection engine (`http://localhost:4321`). Unset means gateway mode. |
+|---|---|---|
+| `PROMPTSHIELD_ENGINE_URL` | `none` | Detection engine URL (e.g. `http://localhost:4321`). `none` = gateway mode, no scanning. |
+| `PROMPTSHIELD_ENGINE_API_KEY` | — | Bearer token sent to the engine. Must match `PROMPTSHIELD_API_KEY` in the engine. Required when `PROMPTSHIELD_ALLOW_UNAUTH=false` on the engine (the default). |
 
-## Model selection
+### API keys
+
+| Variable | Description |
+|---|---|
+| `PROMPTSHIELD_UPSTREAM_API_KEY` | Global key fallback (single-provider mode) |
+| `GEMINI_API_KEY` | Gemini API key |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `SELFHOSTED_API_KEY` | Optional key for self-hosted endpoints |
+
+Multiple keys are supported via comma-separated values — the proxy rotates through them in round-robin order.
+
+### Model selection
 
 No default model. Set one via env var or pass `model` in every request.
 
 | Variable | Description |
-|----------|-------------|
-| `PROMPTSHIELD_MODEL` | Global override. Takes priority over all per-provider vars. |
-| `PROMPTSHIELD_GEMINI_MODEL` | Model for `gemini` provider |
-| `PROMPTSHIELD_OPENAI_MODEL` | Model for `openai` provider |
-| `PROMPTSHIELD_ANTHROPIC_MODEL` | Model for `anthropic` provider |
-| `PROMPTSHIELD_SELFHOSTED_MODEL` | Model for `selfhosted` provider |
-| `PROMPTSHIELD_OPENAI_COMPATIBLE_MODEL` | Model for `openai-compatible` provider |
+|---|---|
+| `PROMPTSHIELD_MODEL` | Global override — takes priority over all per-provider model vars |
+| `PROMPTSHIELD_GEMINI_MODEL` | Model for `gemini` |
+| `PROMPTSHIELD_OPENAI_MODEL` | Model for `openai` |
+| `PROMPTSHIELD_ANTHROPIC_MODEL` | Model for `anthropic` |
+| `PROMPTSHIELD_SELFHOSTED_MODEL` | Model for `selfhosted` |
+| `PROMPTSHIELD_OPENAI_COMPATIBLE_MODEL` | Model for `openai-compatible` |
 
-## Multi-provider routing
-
-| Variable | Description |
-|----------|-------------|
-| `PROMPTSHIELD_PROVIDERS` | Comma-separated providers for model-based routing, e.g. `anthropic,openai,gemini`. First entry is the fallback. |
-| `PROMPTSHIELD_MODEL_ROUTES` | Override built-in routing rules, e.g. `llama3=selfhosted,mistral=openai-compatible` |
-
-## API keys
+### Multi-provider routing
 
 | Variable | Description |
-|----------|-------------|
-| `PROMPTSHIELD_UPSTREAM_API_KEY` | Global key fallback (any provider) |
-| `GEMINI_API_KEY` | Gemini |
-| `OPENAI_API_KEY` | OpenAI |
-| `ANTHROPIC_API_KEY` | Anthropic |
-| `SELFHOSTED_API_KEY` | Self-hosted endpoint (optional) |
+|---|---|
+| `PROMPTSHIELD_MODEL_ROUTES` | Custom model-to-provider routing, e.g. `llama3=selfhosted,mistral=openai-compatible` |
+| `PROMPTSHIELD_GEMINI_UPSTREAM_URL` | Override Gemini base URL |
+| `PROMPTSHIELD_OPENAI_UPSTREAM_URL` | Override OpenAI base URL |
+| `PROMPTSHIELD_ANTHROPIC_UPSTREAM_URL` | Override Anthropic base URL |
+| `PROMPTSHIELD_SELFHOSTED_UPSTREAM_URL` | Self-hosted endpoint URL |
+| `PROMPTSHIELD_OPENAI_COMPATIBLE_UPSTREAM_URL` | OpenAI-compatible endpoint URL |
 
-## TLS
+### Admin API
+
+| Variable | Default | Description |
+|---|---|---|
+| `PROXY_ADMIN_TOKEN` | — | Authenticates `/admin/config` and `/admin/policy` requests. Must match `PROXY_ADMIN_TOKEN` in the dashboard. Use a strong random value in production. |
+
+### Audit log (standalone mode)
+
+| Variable | Default | Description |
+|---|---|---|
+| `PROMPTSHIELD_AUDIT_URL` | — | Dashboard server URL for direct audit push, e.g. `http://localhost:3000`. Leave unset when using docker-compose (log-fwd handles audit forwarding). |
+| `AUDIT_INGEST_SECRET` | — | Shared secret for the audit ingest endpoint. Required when `PROMPTSHIELD_AUDIT_URL` is set. Must match `AUDIT_INGEST_SECRET` in the dashboard. |
+
+### Security and metrics
+
+| Variable | Default | Description |
+|---|---|---|
+| `PROMPTSHIELD_EXPOSE_METRICS_ON_MAIN_PORT` | `false` | Expose unauthenticated `/metrics` on the public listener. **Unsafe.** Prefer `PROMPTSHIELD_METRICS_ADDR`. |
+| `PROMPTSHIELD_METRICS_ADDR` | — | Internal-only bind address for `/metrics`, e.g. `127.0.0.1:9090` |
+| `PROMPTSHIELD_TRUST_PROXY_CIDRS` | — | Comma-separated CIDRs to trust for `X-Real-IP` headers, e.g. `10.0.0.0/8,192.168.0.0/16`. Loopback is always trusted. |
+
+### TLS
 
 Set both or neither. Setting one without the other is a startup error.
 
 | Variable | Description |
-|----------|-------------|
+|---|---|
 | `PROMPTSHIELD_TLS_CERT` | Path to TLS certificate (PEM) |
 | `PROMPTSHIELD_TLS_KEY` | Path to TLS private key (PEM) |
+
+---
+
+## Detection engine
+
+| Variable | Default | Description |
+|---|---|---|
+| `PROMPTSHIELD_ENGINE_PORT` | `4321` | Port the engine listens on |
+| `PROMPTSHIELD_ENGINE_HOST` | `0.0.0.0` | Host the engine binds to |
+| `PROMPTSHIELD_LOG_LEVEL` | `INFO` | Log level: `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` |
+| `PROMPTSHIELD_API_KEY` | — | Bearer token clients must send. Must match `ENGINE_API_KEY` (dashboard) and `PROMPTSHIELD_ENGINE_API_KEY` (proxy). Leave empty only when `PROMPTSHIELD_ALLOW_UNAUTH=true`. |
+| `PROMPTSHIELD_ALLOW_UNAUTH` | `false` | Allow unauthenticated requests. **Only for local development.** |
+
+---
+
+## Dashboard
+
+### Dashboard server (`apps/server`)
+
+| Variable | Default | Required | Description |
+|---|---|---|---|
+| `DATABASE_URL` | — | Yes | PostgreSQL connection string |
+| `BETTER_AUTH_SECRET` | — | Yes | Auth signing secret (min 32 chars) |
+| `BETTER_AUTH_URL` | `http://localhost:3000` | Yes | Public URL of the auth server |
+| `CORS_ORIGIN` | `http://localhost:8000` | Yes | Allowed CORS origin (the web app URL) |
+| `ENGINE_URL` | `http://localhost:4321` | No | Detection engine base URL |
+| `ENGINE_API_KEY` | — | No* | Bearer token for engine requests. *Required when `PROMPTSHIELD_ALLOW_UNAUTH=false` on the engine (the default). Must match `PROMPTSHIELD_API_KEY` in the engine. |
+| `PROXY_URL` | `http://localhost:8080` | No | Proxy base URL for health checks and admin calls |
+| `PROXY_ADMIN_TOKEN` | — | No | Token for proxy admin API calls. Must match `PROXY_ADMIN_TOKEN` in the proxy. |
+| `PROXY_CONFIG_SOURCE` | `local_env` | No | `local_env` reads from `PROXY_ENV_PATH`; `proxy_api` calls the proxy admin API |
+| `PROXY_CONFIG_ENDPOINT` | `/admin/config` | No | Proxy admin config endpoint path |
+| `POLICY_SOURCE` | `local_file` | No | `local_file` reads/writes `POLICY_FILE_PATH`; `proxy_api` uses the proxy admin API |
+| `PROXY_POLICY_ENDPOINT` | `/admin/policy` | No | Proxy admin policy endpoint path |
+| `POLICY_FILE_PATH` | `../../config/policy.yaml` | No | Path to policy YAML (when `POLICY_SOURCE=local_file`) |
+| `POLICY_ALLOWED_DIRS` | — | No | Comma-separated absolute paths allowed for policy file operations |
+| `PROXY_ENV_PATH` | `../../config/proxy.env` | No | Path to proxy env file (when `PROXY_CONFIG_SOURCE=local_env`) |
+| `AUDIT_INGEST_SECRET` | — | Yes | Shared secret validating audit ingest requests from log-fwd or proxy direct push |
+| `CONFIG_ADMIN_EMAILS` | — | No | Comma-separated emails allowed to call config-mutating endpoints |
+
+### Web app (`apps/web`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `VITE_SERVER_URL` | `http://localhost:3000` | Dashboard server URL (browser-side). Must be reachable from the user's browser. |
+
+### Audit log forwarding (log-fwd sidecar)
+
+| Variable | Default | Description |
+|---|---|---|
+| `AUDIT_SERVER_URL` | `http://ps-server:3000` | Dashboard URL the log-fwd sidecar POSTs audit lines to |
+| `AUDIT_INGEST_SECRET` | — | Shared secret (must match the dashboard server's `AUDIT_INGEST_SECRET`) |
+| `PROXY_LOG_SOURCE` | `docker` | Log source: `docker` tails container logs, `file` tails a log file, `stdin` reads stdin |
+| `PROXY_CONTAINER_NAME` | `promptshield-proxy` | Docker container to tail when `PROXY_LOG_SOURCE=docker` |
+| `PROXY_LOG_FILE` | `/proxy-logs/promptshield.log` | Log file to tail when `PROXY_LOG_SOURCE=file` |
+
+---
+
+## Docker Compose injected variables
+
+When running with docker-compose, the following variables are set automatically and do not need to be in `.env.local`:
+
+| Variable | Injected value | Notes |
+|---|---|---|
+| `DATABASE_URL` | Built from `POSTGRES_PASSWORD` | Injected into the `server` service |
+| `BETTER_AUTH_URL` | `http://localhost:3000` | Injected into the `server` service |
+| `CORS_ORIGIN` | `http://localhost:8000` | Injected into the `server` service |
+| `ENGINE_URL` | `http://promptshield-engine:4321` | Container-network address |
+| `ENGINE_API_KEY` | `${ENGINE_API_KEY:-dev-engine-key}` | Falls back to `dev-engine-key` if not set in `.env.local` |
+| `PROXY_URL` | `http://promptshield-proxy:8080` | Container-network address |
+| `VITE_SERVER_URL` | `http://localhost:3000` | Browser-facing; stays as localhost |
+
+---
+
+## Common misconfigurations
+
+### Dashboard cannot reach the detection engine (401)
+
+**Symptom:** `/internal/engine/health` returns 401 or "Engine unreachable".
+
+**Cause:** `ENGINE_API_KEY` is not set in the dashboard server environment. The engine defaults to `PROMPTSHIELD_ALLOW_UNAUTH=false`.
+
+**Fix:** Add `ENGINE_API_KEY=<value>` to `promptshield/.env.local`. The value must equal `PROMPTSHIELD_API_KEY` on the engine. In docker-compose, the value is injected automatically from `.env.local`.
+
+---
+
+### Proxy cannot reach the detection engine (401)
+
+**Symptom:** Requests pass through unscanned; proxy logs show engine 401.
+
+**Cause:** `PROMPTSHIELD_ENGINE_API_KEY` is missing from the proxy environment.
+
+**Fix:** Add `PROMPTSHIELD_ENGINE_API_KEY=<value>` to `promptshield-proxy/.env`. Value must equal `PROMPTSHIELD_API_KEY` on the engine.
+
+---
+
+### Dashboard admin calls to proxy fail (403)
+
+**Symptom:** Policy or config saves from the dashboard return 403.
+
+**Cause:** `PROXY_ADMIN_TOKEN` differs between the dashboard and the proxy.
+
+**Fix:** Ensure both use the same value. In docker-compose, the proxy falls back to `dev-proxy-admin-token`. Set `PROXY_ADMIN_TOKEN=dev-proxy-admin-token` in `promptshield/.env.local` to match.
+
+---
+
+### Audit logs not appearing in the dashboard
+
+**Symptom:** Dashboard shows no audit events despite traffic flowing through the proxy.
+
+**Cause:** The audit path is broken, or `AUDIT_INGEST_SECRET` doesn't match on both sides.
+
+**Docker Compose fix:** Confirm the `log-fwd` service is running. Check that `AUDIT_INGEST_SECRET` in `promptshield/.env.local` matches the value passed to the log-fwd container (both default to `dev-ingest-secret`).
+
+**Standalone fix:** Set `PROMPTSHIELD_AUDIT_URL=http://localhost:3000` and `AUDIT_INGEST_SECRET=<value>` in `promptshield-proxy/.env`. The secret must match `AUDIT_INGEST_SECRET` in the dashboard.

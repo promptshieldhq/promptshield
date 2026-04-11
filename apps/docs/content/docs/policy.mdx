@@ -7,40 +7,42 @@ Edit `config/policy.yaml`:
 
 ```yaml
 pii:
-  EMAIL_ADDRESS:   mask    # replace with [EMAIL_ADDRESS] before the LLM sees it
-  PHONE_NUMBER:    mask
-  IP_ADDRESS:      mask
-  CREDIT_CARD:     block   # reject the request, LLM never called
-  US_SSN:          block
-  IBAN_CODE:       block
-  CRYPTO:          block
+  EMAIL_ADDRESS: mask # replace with [EMAIL_ADDRESS] before the LLM sees it
+  PHONE_NUMBER: mask
+  IP_ADDRESS: mask
+  CREDIT_CARD: block # reject the request, LLM never called
+  US_SSN: block
+  IBAN_CODE: block
+  CRYPTO: block
   MEDICAL_LICENSE: block
-  PERSON:          allow   # pass through unchanged
-  LOCATION:        allow
-  DATE_TIME:       allow
-  URL:             allow
+  PERSON: allow # pass through unchanged
+  LOCATION: allow
+  DATE_TIME: allow
+  URL: allow
 
 secrets:
-  action: block            # block any request containing a detected secret
+  action: block # block any request containing a detected secret
 
 injection:
-  action: block            # block | allow (detection not yet active, see note below)
+  action: block # block | allow (detection not yet active, see note below)
 
 on_detector_error: fail_closed
 ```
 
 <Callout>
-Policy enforcement requires the detection engine. Set `PROMPTSHIELD_ENGINE_URL` to connect it. Without the engine the proxy runs in gateway mode: the policy file loads but nothing is enforced.
+  Policy enforcement requires the detection engine. Set
+  `PROMPTSHIELD_ENGINE_URL` to connect it. Without the engine the proxy runs in
+  gateway mode: the policy file loads but nothing is enforced.
 </Callout>
 
 ## Actions
 
-| Action | Behavior |
-|--------|----------|
-| `block` | HTTP 403 returned. LLM never called. Zero tokens consumed. |
-| `mask` | Entity replaced with `[ENTITY_TYPE]`. Sanitized prompt forwarded. |
-| `allow` | Passes through unchanged. |
-| `warn` | Logs the event and audit record, but lets the request through. Coming soon. |
+| Action  | Behavior                                                                    |
+| ------- | --------------------------------------------------------------------------- |
+| `block` | HTTP 403 returned. LLM never called. Zero tokens consumed.                  |
+| `mask`  | Entity replaced with `[ENTITY_TYPE]`. Sanitized prompt forwarded.           |
+| `allow` | Passes through unchanged.                                                   |
+| `warn`  | Logs the event and audit record, but lets the request through. Coming soon. |
 
 `warn` is useful for rolling out policy changes gradually: run in warn mode, review what would have been blocked in the audit log, tune the config, then switch to `block`.
 
@@ -50,7 +52,7 @@ The `secrets` block controls what happens when a credential appears in a prompt.
 
 ```yaml
 secrets:
-  action: block   # block | allow | warn (coming soon)
+  action: block # block | allow | warn (coming soon)
 ```
 
 `mask` does not apply to secrets. A partially redacted API key may still be usable, so the options are `block` or pass through.
@@ -58,7 +60,10 @@ secrets:
 ## Injection
 
 <Callout type="warn">
-Injection detection is not yet active. The `injection` config block is accepted and parsed, but the detection engine currently returns false for all injection checks. This will be the first thing shipped next. Configure the policy now and it will take effect when detection lands.
+  Injection detection is not yet active. The `injection` config block is
+  accepted and parsed, but the detection engine currently returns false for all
+  injection checks. This will be the first thing shipped next. Configure the
+  policy now and it will take effect when detection lands.
 </Callout>
 
 When injection detection ships, `mask` will not apply. Replacing "ignore previous instructions" with a placeholder still produces a broken prompt. Any `mask` set on injection will escalate to `block`.
@@ -71,7 +76,7 @@ To scan LLM responses before they reach your app:
 response:
   scan: true
   EMAIL_ADDRESS: mask
-  CREDIT_CARD:   block
+  CREDIT_CARD: block
 ```
 
 ## Engine errors

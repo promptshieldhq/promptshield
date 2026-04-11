@@ -7,9 +7,9 @@ Add a `rate_limit` block to `config/policy.yaml` to enable:
 
 ```yaml
 rate_limit:
-  requests_per_minute: 60   # token refill rate
-  burst: 10                 # max tokens available at once
-  key_by: ip                # ip | api_key
+  requests_per_minute: 60 # token refill rate
+  burst: 10 # max tokens available at once
+  key_by: ip # ip | api_key
 ```
 
 Remove the block to disable entirely. No config means no overhead.
@@ -25,5 +25,5 @@ Remove the block to disable entirely. No config means no overhead.
 Returns `HTTP 429` before the upstream is called. Logged as `action: rate_limited` in the audit log.
 
 ```json
-{"error": "rate limit exceeded"}
+{ "error": "rate limit exceeded" }
 ```

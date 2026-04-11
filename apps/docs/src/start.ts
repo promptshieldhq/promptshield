@@ -1,7 +1,7 @@
-import { createMiddleware, createStart } from '@tanstack/react-start';
-import { isMarkdownPreferred, rewritePath } from 'fumadocs-core/negotiation';
-import { redirect } from '@tanstack/react-router';
-import { docsContentRoute, docsRoute } from '@/lib/shared';
+import { createMiddleware, createStart } from "@tanstack/react-start";
+import { isMarkdownPreferred, rewritePath } from "fumadocs-core/negotiation";
+import { redirect } from "@tanstack/react-router";
+import { docsContentRoute, docsRoute } from "@/lib/shared";
 
 const { rewrite: rewriteDocs } = rewritePath(
   `${docsRoute}{/*path}`,
