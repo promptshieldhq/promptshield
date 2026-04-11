@@ -1,0 +1,31 @@
+# VCS
+.git
+.gitignore
+
+# Dependencies and build outputs
+**/node_modules
+**/.turbo
+**/dist
+**/build
+**/.output
+**/.tanstack
+**/.source
+
+# Environment and local state
+.env
+.env.*
+!.env.local.example
+**/.env
+**/.env.*
+**/.ps-config.json
+
+# Logs and caches
+**/*.log
+**/.cache
+
+# Editor/system files
+.vscode
+.idea
+.DS_Store
+
+# Keep Docker files and source manifests included by default

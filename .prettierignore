@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build and generated outputs
+dist/
+build/
+coverage/
+.turbo/
+.nx/
+.next/
+**/.output/
+**/.source/
+
+# Tooling caches and temp
+.cache/
+tmp/
+temp/

@@ -1,0 +1,20 @@
+FROM oven/bun:1.3.11-alpine
+
+WORKDIR /app
+
+COPY package.json bun.lock tsconfig.json turbo.json ./
+
+COPY packages/api/package.json     ./packages/api/
+COPY packages/auth/package.json    ./packages/auth/
+COPY packages/config/package.json  ./packages/config/
+COPY packages/db/package.json      ./packages/db/
+COPY packages/env/package.json     ./packages/env/
+COPY packages/ui/package.json      ./packages/ui/
+
+COPY apps/server/package.json      ./apps/server/
+COPY apps/web/package.json         ./apps/web/
+COPY apps/docs/package.json        ./apps/docs/
+COPY apps/docs/source.config.ts   ./apps/docs/
+
+RUN bun install --frozen-lockfile
+

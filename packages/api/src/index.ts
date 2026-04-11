@@ -2,13 +2,17 @@ import { initTRPC, TRPCError } from "@trpc/server";
 
 import type { Context } from "./context";
 
-export const t = initTRPC.context<Context>().create();
+const trpc = initTRPC.context<Context>().create();
 
-export const router = t.router;
+export const t: typeof trpc = trpc;
 
-export const publicProcedure = t.procedure;
+export const router: typeof trpc.router = trpc.router;
 
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+export const publicProcedure: typeof trpc.procedure = trpc.procedure;
+
+export const protectedProcedure = trpc.procedure.use<{
+  session: NonNullable<Context["session"]>;
+}>(({ ctx, next }) => {
   if (!ctx.session) {
     throw new TRPCError({
       code: "UNAUTHORIZED",

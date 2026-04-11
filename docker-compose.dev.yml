@@ -1,0 +1,155 @@
+name: promptshield-dev
+
+x-bun-base: &bun-base
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  volumes:
+    - .:/app
+    - bun_modules:/app/node_modules
+  env_file:
+    - .env.local
+  networks:
+    - promptshield
+  restart: unless-stopped
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ps-postgres
+    environment:
+      POSTGRES_DB: promptshield
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - promptshield
+
+  db-migrate:
+    <<: *bun-base
+    container_name: ps-db-migrate
+    working_dir: /app/packages/db
+    command: ["bunx", "drizzle-kit", "migrate"]
+    env_file: []
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/promptshield
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  init-policy:
+    image: alpine:3.21
+    container_name: ps-init-policy
+    volumes:
+      - promptshield_policy:/policy
+    command:
+      [
+        "sh",
+        "-c",
+        "if [ ! -f /policy/policy.yaml ]; then cat > /policy/policy.yaml <<'EOF'\npii_min_score: 0.70\n\npii:\n  CREDIT_CARD: mask\n  US_SSN: block\n  EMAIL_ADDRESS: mask\n  PHONE_NUMBER: mask\n\ninjection:\n  action: block\n\non_detector_error: fail_closed\nEOF\nfi",
+      ]
+    restart: "no"
+
+  server:
+    <<: *bun-base
+    container_name: ps-server
+    working_dir: /app/apps/server
+    command: bun run --hot src/index.ts
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/promptshield
+      BETTER_AUTH_URL: http://localhost:3000
+      CORS_ORIGIN: http://localhost:8000
+      ENGINE_URL: http://promptshield-engine:4321
+      ENGINE_API_KEY: "${ENGINE_API_KEY:-dev-engine-key}"
+      PROXY_URL: http://promptshield-proxy:8080
+      POLICY_FILE_PATH: /policy/policy.yaml
+      PROXY_ENV_PATH: /policy/proxy.env
+      AUDIT_INGEST_SECRET: ${AUDIT_INGEST_SECRET:-dev-ingest-secret}
+      CONFIG_ADMIN_EMAILS: ${CONFIG_ADMIN_EMAILS:-admin@admin.com,test@example.com}
+    volumes:
+      - .:/app
+      - bun_modules:/app/node_modules
+      - promptshield_policy:/policy
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+      init-policy:
+        condition: service_completed_successfully
+
+  log-fwd:
+    image: docker:27-cli
+    container_name: ps-log-fwd
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts/log-fwd.sh:/log-fwd.sh:ro
+      - ./proxy-logs:/proxy-logs
+    environment:
+      AUDIT_INGEST_SECRET: ${AUDIT_INGEST_SECRET:-dev-ingest-secret}
+      AUDIT_SERVER_URL: ${AUDIT_SERVER_URL:-http://ps-server:3000}
+      PROXY_LOG_SOURCE: ${PROXY_LOG_SOURCE:-docker}
+      PROXY_CONTAINER_NAME: ${PROXY_CONTAINER_NAME:-promptshield-proxy}
+      PROXY_LOG_FILE: ${PROXY_LOG_FILE:-/proxy-logs/promptshield.log}
+    command: ["sh", "/log-fwd.sh"]
+    networks:
+      - promptshield
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  web:
+    <<: *bun-base
+    container_name: ps-web
+    working_dir: /app/apps/web
+    command:
+      [
+        "sh",
+        "-c",
+        "cd /app && bun install --frozen-lockfile && cd /app/apps/web && bunx vite dev --host 0.0.0.0 --port 8000",
+      ]
+    environment:
+      VITE_SERVER_URL: http://localhost:3000
+      SSR_SERVER_URL: http://ps-server:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - server
+
+  docs:
+    <<: *bun-base
+    container_name: ps-docs
+    working_dir: /app/apps/docs
+    command:
+      [
+        "sh",
+        "-c",
+        "cd /app && bun install --frozen-lockfile && cd /app/apps/docs && bunx vite dev --host 0.0.0.0 --port 4000",
+      ]
+    environment:
+      NITRO_PRESET: node
+    ports:
+      - "4000:4000"
+
+volumes:
+  postgres_data:
+  bun_modules:
+  promptshield_policy:
+    name: promptshield_policy
+
+networks:
+  promptshield:
+    name: promptshield

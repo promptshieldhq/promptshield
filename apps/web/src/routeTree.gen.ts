@@ -10,17 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LayoutSettingsRouteImport } from './routes/_layout.settings'
+import { Route as LayoutProxyRouteImport } from './routes/_layout.proxy'
+import { Route as LayoutPolicyRouteImport } from './routes/_layout.policy'
+import { Route as LayoutKeysRouteImport } from './routes/_layout.keys'
+import { Route as LayoutEngineRouteImport } from './routes/_layout.engine'
+import { Route as LayoutDashboardRouteImport } from './routes/_layout.dashboard'
+import { Route as LayoutConfigRouteImport } from './routes/_layout.config'
+import { Route as LayoutAuditRouteImport } from './routes/_layout.audit'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const LayoutRoute = LayoutRouteImport.update({
+  id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -28,34 +35,128 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutProxyRoute = LayoutProxyRouteImport.update({
+  id: '/proxy',
+  path: '/proxy',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutPolicyRoute = LayoutPolicyRouteImport.update({
+  id: '/policy',
+  path: '/policy',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutKeysRoute = LayoutKeysRouteImport.update({
+  id: '/keys',
+  path: '/keys',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutEngineRoute = LayoutEngineRouteImport.update({
+  id: '/engine',
+  path: '/engine',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutDashboardRoute = LayoutDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutConfigRoute = LayoutConfigRouteImport.update({
+  id: '/config',
+  path: '/config',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAuditRoute = LayoutAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/audit': typeof LayoutAuditRoute
+  '/config': typeof LayoutConfigRoute
+  '/dashboard': typeof LayoutDashboardRoute
+  '/engine': typeof LayoutEngineRoute
+  '/keys': typeof LayoutKeysRoute
+  '/policy': typeof LayoutPolicyRoute
+  '/proxy': typeof LayoutProxyRoute
+  '/settings': typeof LayoutSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/audit': typeof LayoutAuditRoute
+  '/config': typeof LayoutConfigRoute
+  '/dashboard': typeof LayoutDashboardRoute
+  '/engine': typeof LayoutEngineRoute
+  '/keys': typeof LayoutKeysRoute
+  '/policy': typeof LayoutPolicyRoute
+  '/proxy': typeof LayoutProxyRoute
+  '/settings': typeof LayoutSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/_layout': typeof LayoutRouteWithChildren
   '/login': typeof LoginRoute
+  '/_layout/audit': typeof LayoutAuditRoute
+  '/_layout/config': typeof LayoutConfigRoute
+  '/_layout/dashboard': typeof LayoutDashboardRoute
+  '/_layout/engine': typeof LayoutEngineRoute
+  '/_layout/keys': typeof LayoutKeysRoute
+  '/_layout/policy': typeof LayoutPolicyRoute
+  '/_layout/proxy': typeof LayoutProxyRoute
+  '/_layout/settings': typeof LayoutSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/audit'
+    | '/config'
+    | '/dashboard'
+    | '/engine'
+    | '/keys'
+    | '/policy'
+    | '/proxy'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login'
-  id: '__root__' | '/' | '/dashboard' | '/login'
+  to:
+    | '/'
+    | '/login'
+    | '/audit'
+    | '/config'
+    | '/dashboard'
+    | '/engine'
+    | '/keys'
+    | '/policy'
+    | '/proxy'
+    | '/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/_layout'
+    | '/login'
+    | '/_layout/audit'
+    | '/_layout/config'
+    | '/_layout/dashboard'
+    | '/_layout/engine'
+    | '/_layout/keys'
+    | '/_layout/policy'
+    | '/_layout/proxy'
+    | '/_layout/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
+  LayoutRoute: typeof LayoutRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
 
@@ -68,11 +169,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/_layout': {
+      id: '/_layout'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -82,12 +183,93 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_layout/settings': {
+      id: '/_layout/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof LayoutSettingsRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/proxy': {
+      id: '/_layout/proxy'
+      path: '/proxy'
+      fullPath: '/proxy'
+      preLoaderRoute: typeof LayoutProxyRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/policy': {
+      id: '/_layout/policy'
+      path: '/policy'
+      fullPath: '/policy'
+      preLoaderRoute: typeof LayoutPolicyRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/keys': {
+      id: '/_layout/keys'
+      path: '/keys'
+      fullPath: '/keys'
+      preLoaderRoute: typeof LayoutKeysRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/engine': {
+      id: '/_layout/engine'
+      path: '/engine'
+      fullPath: '/engine'
+      preLoaderRoute: typeof LayoutEngineRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/dashboard': {
+      id: '/_layout/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof LayoutDashboardRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/config': {
+      id: '/_layout/config'
+      path: '/config'
+      fullPath: '/config'
+      preLoaderRoute: typeof LayoutConfigRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/audit': {
+      id: '/_layout/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof LayoutAuditRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
+interface LayoutRouteChildren {
+  LayoutAuditRoute: typeof LayoutAuditRoute
+  LayoutConfigRoute: typeof LayoutConfigRoute
+  LayoutDashboardRoute: typeof LayoutDashboardRoute
+  LayoutEngineRoute: typeof LayoutEngineRoute
+  LayoutKeysRoute: typeof LayoutKeysRoute
+  LayoutPolicyRoute: typeof LayoutPolicyRoute
+  LayoutProxyRoute: typeof LayoutProxyRoute
+  LayoutSettingsRoute: typeof LayoutSettingsRoute
+}
+
+const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutAuditRoute: LayoutAuditRoute,
+  LayoutConfigRoute: LayoutConfigRoute,
+  LayoutDashboardRoute: LayoutDashboardRoute,
+  LayoutEngineRoute: LayoutEngineRoute,
+  LayoutKeysRoute: LayoutKeysRoute,
+  LayoutPolicyRoute: LayoutPolicyRoute,
+  LayoutProxyRoute: LayoutProxyRoute,
+  LayoutSettingsRoute: LayoutSettingsRoute,
+}
+
+const LayoutRouteWithChildren =
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
+  LayoutRoute: LayoutRouteWithChildren,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
