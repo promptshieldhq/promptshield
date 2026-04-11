@@ -33,7 +33,6 @@ with client.chat.completions.stream(
         print(chunk.choices[0].delta.content or "", end="", flush=True)
 ```
 
-
 ## The model field
 
 The `model` field in the request body is passed through to the upstream. It overrides the server-side default (`PROMPTSHIELD_MODEL`, `PROMPTSHIELD_GEMINI_MODEL`, etc.) for that request. In multi-provider mode it also controls which backend handles the request: `claude-*` goes to Anthropic, `gpt-*` to OpenAI, `gemini-*` to Gemini.
@@ -42,11 +41,11 @@ The `model` field in the request body is passed through to the upstream. It over
 
 Instead of storing keys in `.env` on the proxy server, pass them per-request via headers. The proxy checks these before falling back to environment variables:
 
-| Header | Used for |
-|--------|----------|
-| `x-llm-api-key` | Any provider |
-| `x-gemini-api-key` | Gemini only |
-| `x-openai-api-key` | OpenAI only |
+| Header                        | Used for     |
+| ----------------------------- | ------------ |
+| `x-llm-api-key`               | Any provider |
+| `x-gemini-api-key`            | Gemini only  |
+| `x-openai-api-key`            | OpenAI only  |
 | `Authorization: Bearer <key>` | Any provider |
 
 ```python

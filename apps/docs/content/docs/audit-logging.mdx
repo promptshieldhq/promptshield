@@ -30,18 +30,18 @@ No PII or secrets appear in the log. `entities_detected` contains type names onl
 
 ## Fields
 
-| Field | Description |
-|-------|-------------|
-| `request_id` | Unique ID for correlating across systems |
-| `action` | Final outcome |
-| `provider` / `model` | Upstream LLM |
-| `client_ip` | Caller IP |
-| `injection_detected` | Whether a prompt injection pattern was found. Always `false` until injection detection ships. |
-| `entities_detected` | PII and secret type names found (never the values) |
-| `reasons` | Why the action was taken |
-| `response_scanned` | Whether the LLM response was scanned on the way back |
-| `prompt_tokens` / `completion_tokens` / `total_tokens` | Counts from the upstream |
-| `latency_ms` | Total time including the upstream LLM call |
+| Field                                                  | Description                                                                                   |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `request_id`                                           | Unique ID for correlating across systems                                                      |
+| `action`                                               | Final outcome                                                                                 |
+| `provider` / `model`                                   | Upstream LLM                                                                                  |
+| `client_ip`                                            | Caller IP                                                                                     |
+| `injection_detected`                                   | Whether a prompt injection pattern was found. Always `false` until injection detection ships. |
+| `entities_detected`                                    | PII and secret type names found (never the values)                                            |
+| `reasons`                                              | Why the action was taken                                                                      |
+| `response_scanned`                                     | Whether the LLM response was scanned on the way back                                          |
+| `prompt_tokens` / `completion_tokens` / `total_tokens` | Counts from the upstream                                                                      |
+| `latency_ms`                                           | Total time including the upstream LLM call                                                    |
 
 `injection_detected`, `entities_detected`, and `response_scanned` are always present. The latter two are empty or false in gateway mode.
 
@@ -50,11 +50,6 @@ No PII or secrets appear in the log. `entities_detected` contains type names onl
 PromptShield writes to stdout. Pipe it anywhere:
 
 ```bash
-# Loki
-./bin/promptshield | promtail --stdin
-
-# CloudWatch
-./bin/promptshield | aws logs put-log-events ...
 
 # File
 ./bin/promptshield >> /var/log/promptshield/audit.ndjson

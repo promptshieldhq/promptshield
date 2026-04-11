@@ -28,12 +28,30 @@ uv run uvicorn main:app --port 4321
 
 The engine listens on `:4321` by default.
 
+## Run with Docker Compose (dev only)
+
+The engine repository currently ships a development Compose file only: `docker-compose.dev.yml`.
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+There is no production Compose file in that repository.
+
+## Authentication
+
+By default, the engine requires `PROMPTSHIELD_API_KEY`.
+
+- Recommended: set a key in the engine and set the same value as `PROMPTSHIELD_ENGINE_API_KEY` in the proxy.
+- Local/dev-only: set `PROMPTSHIELD_ALLOW_UNAUTH=true` on the engine to disable auth.
+
 ## Connect to the proxy
 
 Add to the proxy `.env` and restart:
 
 ```bash
 PROMPTSHIELD_ENGINE_URL=http://localhost:4321
+PROMPTSHIELD_ENGINE_API_KEY=your-engine-key
 ```
 
 The proxy will now scan every request before forwarding to the LLM and every response on the way back.

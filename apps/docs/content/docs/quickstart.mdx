@@ -66,13 +66,24 @@ git clone https://github.com/promptshieldhq/promptshield-engine
 cd promptshield-engine
 
 uv sync
-uv run uvicorn main:app --port 4321
+PROMPTSHIELD_API_KEY=dev-engine-key uv run uvicorn main:app --port 4321
 ```
+
+Or run the engine repo with Docker Compose (development file):
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield-engine
+cd promptshield-engine
+docker compose -f docker-compose.dev.yml up --build
+```
+
+The engine repo currently includes `docker-compose.dev.yml` (development) and does not include a production Compose file.
 
 Add to the proxy `.env`:
 
 ```bash
 PROMPTSHIELD_ENGINE_URL=http://localhost:4321
+PROMPTSHIELD_ENGINE_API_KEY=dev-engine-key
 ```
 
 Restart the proxy (`make run` or `./promptshield-proxy`). The proxy will now scan every request and response through the engine before acting on them.
@@ -100,11 +111,11 @@ The LLM was never called. See [Secrets Detection](/docs/secrets) for the full li
 
 ## Services
 
-| Service | Address | Notes |
-|---------|---------|-------|
-| Proxy | `:8080` | Rate limiting, routing, audit logging |
-| Metrics | `:8080/metrics` | Always on |
-| Detection engine | `:4321` | Scanning and policy enforcement |
+| Service          | Address         | Notes                                 |
+| ---------------- | --------------- | ------------------------------------- |
+| Proxy            | `:8080`         | Rate limiting, routing, audit logging |
+| Metrics          | `:8080/metrics` | Always on                             |
+| Detection engine | `:4321`         | Scanning and policy enforcement       |
 
 ## Next steps
 

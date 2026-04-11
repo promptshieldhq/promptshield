@@ -54,9 +54,9 @@ PROMPTSHIELD_TLS_CERT=cert.pem PROMPTSHIELD_TLS_KEY=key.pem make run
 
 ## Which one should I use?
 
-| Scenario | Pick |
-|----------|------|
-| VPS or bare metal with a public domain | **Caddy**: auto-renews, one config file |
-| Already running nginx | **nginx + certbot** |
-| Kubernetes or service mesh | **Native TLS** or delegate to the ingress controller |
-| Local dev or internal network | **Self-signed** |
+| Scenario                               | Pick                                                 |
+| -------------------------------------- | ---------------------------------------------------- |
+| VPS or bare metal with a public domain | **Caddy**: auto-renews, one config file              |
+| Already running nginx                  | **nginx + certbot**                                  |
+| Kubernetes or service mesh             | **Native TLS** or delegate to the ingress controller |
+| Local dev or internal network          | **Self-signed**                                      |

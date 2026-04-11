@@ -3,16 +3,45 @@ title: Contributing
 description: Contributing guide for PromptShield.
 ---
 
-Two repos:
+Three repos:
 
+- **Dashboard** (TypeScript/Bun): [promptshieldhq/promptshield](https://github.com/promptshieldhq/promptshield)
 - **Proxy** (Go): [promptshieldhq/promptshield-proxy](https://github.com/promptshieldhq/promptshield-proxy)
 - **Engine** (Python): [promptshieldhq/promptshield-engine](https://github.com/promptshieldhq/promptshield-engine)
 
 ## Before opening a PR
 
-If it's a bug fix, a failing test or reproduction steps help. If it's a new feature or a non-trivial change, open an issue first, saves building something in the wrong direction.
+If it's a bug fix, a failing test or reproduction steps help. If it's a new feature or a non-trivial change, open an issue first — saves building something in the wrong direction.
 
 Fork, branch off `main`, keep the PR focused on one thing.
+
+## Running locally
+
+**Dashboard:**
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield
+cd promptshield
+cp .env.local.example .env.local   # fill in BETTER_AUTH_SECRET
+docker compose -f docker-compose.dev.yml up --build
+```
+
+**Proxy:**
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield-proxy
+cd promptshield-proxy
+cp .env.example .env
+docker compose -f docker-compose.dev.yml up --build
+```
+
+**Engine:**
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield-engine
+cd promptshield-engine
+docker compose -f docker-compose.dev.yml up --build
+```
 
 ## Commits
 
@@ -26,4 +55,4 @@ docs: add troubleshooting guide
 
 For bugs or issues, open an issue in the relevant repo.
 
-For discussions or questions, reach out [Aju Tamang](mailto:contact@ajutamang.com).
+For discussions or questions, open a [GitHub Discussion](https://github.com/promptshieldhq/promptshield-proxy/discussions).

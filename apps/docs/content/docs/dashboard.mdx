@@ -1,19 +1,101 @@
 ---
 title: Dashboard
-description: Web UI for PromptShield. Not yet released.
-status: coming-soon
+description: Web UI for managing PromptShield — policy editor, audit log, proxy config, and API keys.
 ---
 
-<Banner>
-  The PromptShield dashboard is not yet released.
-</Banner>
 
-A web UI for viewing blocked requests, editing policy, tracking token usage, and checking proxy and engine health.
+The PromptShield dashboard is a self-hosted web app for managing the proxy and engine without touching config files directly.
 
-Have a feature in mind or want to discuss what it should do? [Reach out](mailto:contact@ajutamang.com).
+<figure>
+	<img src="/images/dashboard/dashboard.png" alt="PromptShield dashboard overview showing threat rate, recent blocks, and entity distribution" />
+</figure>
 
-## In the meantime
 
-<Callout>
-  The [Grafana dashboard](/docs/grafana) covers metrics and alerting today. For request history, pipe stdout to a file. See [Audit Logging](/docs/audit-logging).
-</Callout>
+**What it does:**
+
+- Edit `policy.yaml` visually or as raw YAML — changes hot-reload into the proxy
+- Browse and filter the audit log (blocked requests, detected entity types)
+- Manage API keys and assign per-key policies
+- Configure proxy and engine URLs, provider settings, and API keys
+- View live proxy and engine health
+
+## Requirements
+
+- Docker + Docker Compose
+- The proxy and engine stacks running (optional — dashboard works standalone)
+
+## Setup
+
+**1. Clone the dashboard repo:**
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield
+cd promptshield
+```
+
+**2. Copy and fill in the env file:**
+
+```bash
+cp .env.local.example .env.local
+```
+
+Minimum required in `.env.local`:
+
+```bash
+BETTER_AUTH_SECRET=change-me-at-least-32-characters-long  # any 32+ char string
+POSTGRES_PASSWORD=password
+```
+
+**3. Start:**
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+This starts PostgreSQL, runs DB migrations, seeds the policy volume, and starts the API server, web frontend, and docs.
+
+## Services
+
+| Service    | Address                 | Description      |
+| ---------- | ----------------------- | ---------------- |
+| Web UI     | `http://localhost:8000` | Dashboard        |
+| API server | `http://localhost:3000` | Backend |
+| Docs       | `http://localhost:4000` | This site        |
+
+## Connecting to the proxy and engine
+
+Start the engine and proxy stacks first:
+
+```bash
+cd promptshield-engine && docker compose -f docker-compose.dev.yml up -d
+cd promptshield-proxy  && docker compose -f docker-compose.dev.yml up -d
+```
+
+All three stacks share the `promptshield` Docker network. The dashboard server reaches the proxy at `promptshield-proxy:8080` and the engine at `promptshield-engine:4321` automatically.
+
+## Without Docker
+
+Run each service directly with Bun:
+
+```bash
+# Install deps
+bun install
+
+# Run DB migrations (once)
+cd packages/db && bunx drizzle-kit migrate
+
+# API server (port 3000)
+cd apps/server && bun run --hot src/index.ts
+
+# Web frontend (port 8000)
+cd apps/web && bun run dev
+
+# Docs (port 4000, optional)
+cd apps/docs && bun run dev --port 4000
+```
+
+Copy `apps/server/.env.example` to `apps/server/.env` and `apps/web/.env.example` to `apps/web/.env` before starting.
+
+## Policy file path
+
+The dashboard reads and writes `policy.yaml` at a configurable path. In Docker it defaults to `/policy/policy.yaml` (the shared `promptshield_policy` volume). Go to **Config → Policy File** to validate or change the path.
