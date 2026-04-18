@@ -68,10 +68,10 @@ Start the engine and proxy stacks first:
 
 ```bash
 cd promptshield-engine && docker compose -f docker-compose.dev.yml up -d
-cd promptshield-proxy  && docker compose -f docker-compose.dev.yml up -d
+cd promptshield-gateway  && docker compose -f docker-compose.dev.yml up -d
 ```
 
-All three stacks share the `promptshield` Docker network. The dashboard server reaches the proxy at `promptshield-proxy:8080` and the engine at `promptshield-engine:4321` automatically.
+All three stacks share the `promptshield` Docker network. The dashboard server reaches the proxy at `promptshield-gateway:8080` and the engine at `promptshield-engine:4321` automatically.
 
 ## Without Docker
 

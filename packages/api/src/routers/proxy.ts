@@ -164,7 +164,7 @@ function proxyConfigError(status: number, bodyText: string): TRPCError {
     return new TRPCError({
       code: "BAD_REQUEST",
       message:
-        "Proxy config endpoint not found. Ensure promptshield-proxy exposes /admin/config",
+        "Proxy config endpoint not found. Ensure promptshield-gateway exposes /admin/config",
     });
   }
 
@@ -740,7 +740,7 @@ export const proxyRouter = router({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "API key editing is disabled in proxy_api mode. Manage keys via promptshield-proxy admin endpoint.",
+            "API key editing is disabled in proxy_api mode. Manage keys via promptshield-gateway admin endpoint.",
         });
       }
 
@@ -785,7 +785,7 @@ export const proxyRouter = router({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "API key editing is disabled in proxy_api mode. Manage keys via promptshield-proxy admin endpoint.",
+            "API key editing is disabled in proxy_api mode. Manage keys via promptshield-gateway admin endpoint.",
         });
       }
 

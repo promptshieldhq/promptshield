@@ -6,7 +6,7 @@ description: Contributing guide for PromptShield.
 Three repos:
 
 - **Dashboard** (TypeScript/Bun): [promptshieldhq/promptshield](https://github.com/promptshieldhq/promptshield)
-- **Proxy** (Go): [promptshieldhq/promptshield-proxy](https://github.com/promptshieldhq/promptshield-proxy)
+- **Proxy** (Go): [promptshieldhq/promptshield-gateway](https://github.com/promptshieldhq/promptshield-gateway)
 - **Engine** (Python): [promptshieldhq/promptshield-engine](https://github.com/promptshieldhq/promptshield-engine)
 
 ## Before opening a PR
@@ -29,8 +29,8 @@ docker compose -f docker-compose.dev.yml up --build
 **Proxy:**
 
 ```bash
-git clone https://github.com/promptshieldhq/promptshield-proxy
-cd promptshield-proxy
+git clone https://github.com/promptshieldhq/promptshield-gateway
+cd promptshield-gateway
 cp .env.example .env
 docker compose -f docker-compose.dev.yml up --build
 ```
@@ -55,4 +55,4 @@ docs: add troubleshooting guide
 
 For bugs or issues, open an issue in the relevant repo.
 
-For discussions or questions, open a [GitHub Discussion](https://github.com/promptshieldhq/promptshield-proxy/discussions).
+For discussions or questions, open a [GitHub Discussion](https://github.com/promptshieldhq/promptshield-gateway/discussions).

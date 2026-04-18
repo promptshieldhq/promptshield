@@ -101,7 +101,7 @@ function proxyRequestError(status: number, bodyText: string): TRPCError {
     return new TRPCError({
       code: "BAD_REQUEST",
       message:
-        "Proxy policy endpoint not found. Ensure promptshield-proxy exposes /admin/policy",
+        "Proxy policy endpoint not found. Ensure promptshield-gateway exposes /admin/policy",
     });
   }
 

@@ -1,6 +1,6 @@
 # PromptShield Docs
 
-Documentation site for [PromptShield](https://github.com/promptshieldhq/promptshield-proxy) — open-source LLM proxy with PII detection, injection blocking, rate limiting, audit logging, and Prometheus metrics.
+Documentation site for [PromptShield](https://github.com/promptshieldhq/promptshield-gateway) — open-source LLM proxy with PII detection, injection blocking, rate limiting, audit logging, and Prometheus metrics.
 
 Built with [Fumadocs](https://fumadocs.vercel.app) on TanStack Start.
 

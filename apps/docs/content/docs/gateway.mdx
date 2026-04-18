@@ -1,0 +1,175 @@
+---
+title: Gateway
+description: Setup guide for the PromptShield gateway.
+---
+
+The gateway is a single Go binary. It handles provider routing, API key management, rate limiting, token budgets, audit logging, and Prometheus metrics. Connect the detection engine to add scanning and policy enforcement.
+
+## Requirements
+
+- Go 1.22+ (build from source) or download a pre-built release
+
+## Install
+
+**From source:**
+
+```bash
+git clone https://github.com/promptshieldhq/promptshield-gateway
+cd promptshield-gateway
+```
+
+**Download a release:**
+
+Grab the binary for your platform from [releases](https://github.com/promptshieldhq/promptshield-gateway/releases).
+
+## Configure
+
+```bash
+cp .env.example .env
+```
+
+Minimum required:
+
+```bash
+PROMPTSHIELD_PROVIDER=gemini   # gemini | openai | anthropic | openai-compatible | selfhosted
+GEMINI_API_KEY=your-key        # key for your chosen provider
+```
+
+See [Environment Variables](/docs/environment-variables) for the full list.
+
+## Run
+
+**From source:**
+
+```bash
+make run
+# listening on :8080
+```
+
+**From release binary:**
+
+```bash
+./promptshield-gateway
+# listening on :8080
+```
+
+## Verify
+
+```bash
+curl -s http://localhost:8080/health
+# {"status":"ok","service":"promptshield-gateway"}
+```
+
+## Connect your app
+
+Change `base_url` in your SDK. No other code changes needed.
+
+```python
+client = OpenAI(base_url="http://localhost:8080/v1", api_key="sk-...")
+```
+
+## Modes
+
+**Gateway mode** (default) — no engine needed. Rate limiting, token budgets, API key rotation, audit logging, and Prometheus metrics work out of the box.
+
+```bash
+PROMPTSHIELD_ENGINE_URL=none
+```
+
+**Security mode** — full PII and secrets scanning on every request.
+
+```bash
+PROMPTSHIELD_ENGINE_URL=http://localhost:4321
+PROMPTSHIELD_ENGINE_API_KEY=your-engine-key
+```
+
+See [Engine](/docs/engine) for setup.
+
+## API key vault
+
+Configure key pools per provider using comma-separated values. The gateway round-robins across them — your app sends a placeholder, the real keys never leave the gateway.
+
+```bash
+OPENAI_API_KEY=key1,key2,key3
+ANTHROPIC_API_KEY=key1,key2
+GEMINI_API_KEY=key1
+```
+
+Key resolution order per request:
+1. `x-llm-api-key` or provider-specific header from request
+2. Configured key pool (round-robin)
+3. `Authorization: Bearer` passthrough
+
+## Policy hot-reload
+
+The gateway watches the policy file for changes and reloads atomically — no restart required, no requests dropped. If a reload fails, the previous policy stays active.
+
+```bash
+PROMPTSHIELD_POLICY_PATH=config/policy.yaml  # default
+```
+
+You can also update policy at runtime via the [Admin API](#admin-api) without touching the file.
+
+## Streaming
+
+Full SSE streaming is supported. Token usage is extracted from stream chunks and counted against budgets. Response scanning is skipped on streaming responses.
+
+```python
+with client.chat.completions.stream(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Tell me a story"}],
+) as stream:
+    for chunk in stream:
+        print(chunk.choices[0].delta.content or "", end="", flush=True)
+```
+
+## Admin API
+
+Four authenticated endpoints for runtime configuration without restarts.
+
+**Requires:**
+
+```bash
+PROXY_ADMIN_TOKEN=your-secret-token
+```
+
+### Get current config
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8080/admin/config
+```
+
+### Update configuration
+
+```bash
+curl -X PUT -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "mode": "security",
+    "engineUrl": "http://localhost:4321",
+    "providerMode": "single",
+    "provider": "openai"
+  }' \
+  http://localhost:8080/admin/config
+```
+
+Changes persist to disk.
+
+### Get policy
+
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8080/admin/policy
+```
+
+### Update policy
+
+```bash
+curl -X PUT -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/yaml" \
+  --data-binary @config/policy.yaml \
+  http://localhost:8080/admin/policy
+```
+
+Policy reloads immediately in-memory. No restart needed.

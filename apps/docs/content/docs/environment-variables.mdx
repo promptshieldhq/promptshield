@@ -159,7 +159,7 @@ Set both or neither. Setting one without the other is a startup error.
 | `AUDIT_SERVER_URL` | `http://ps-server:3000` | Dashboard URL the log-fwd sidecar POSTs audit lines to |
 | `AUDIT_INGEST_SECRET` | — | Shared secret (must match the dashboard server's `AUDIT_INGEST_SECRET`) |
 | `PROXY_LOG_SOURCE` | `docker` | Log source: `docker` tails container logs, `file` tails a log file, `stdin` reads stdin |
-| `PROXY_CONTAINER_NAME` | `promptshield-proxy` | Docker container to tail when `PROXY_LOG_SOURCE=docker` |
+| `PROXY_CONTAINER_NAME` | `promptshield-gateway` | Docker container to tail when `PROXY_LOG_SOURCE=docker` |
 | `PROXY_LOG_FILE` | `/proxy-logs/promptshield.log` | Log file to tail when `PROXY_LOG_SOURCE=file` |
 
 ---
@@ -175,7 +175,7 @@ When running with docker-compose, the following variables are set automatically 
 | `CORS_ORIGIN` | `http://localhost:8000` | Injected into the `server` service |
 | `ENGINE_URL` | `http://promptshield-engine:4321` | Container-network address |
 | `ENGINE_API_KEY` | `${ENGINE_API_KEY:-dev-engine-key}` | Falls back to `dev-engine-key` if not set in `.env.local` |
-| `PROXY_URL` | `http://promptshield-proxy:8080` | Container-network address |
+| `PROXY_URL` | `http://promptshield-gateway:8080` | Container-network address |
 | `VITE_SERVER_URL` | `http://localhost:3000` | Browser-facing; stays as localhost |
 
 ---
@@ -198,7 +198,7 @@ When running with docker-compose, the following variables are set automatically 
 
 **Cause:** `PROMPTSHIELD_ENGINE_API_KEY` is missing from the proxy environment.
 
-**Fix:** Add `PROMPTSHIELD_ENGINE_API_KEY=<value>` to `promptshield-proxy/.env`. Value must equal `PROMPTSHIELD_API_KEY` on the engine.
+**Fix:** Add `PROMPTSHIELD_ENGINE_API_KEY=<value>` to `promptshield-gateway/.env`. Value must equal `PROMPTSHIELD_API_KEY` on the engine.
 
 ---
 
@@ -220,4 +220,4 @@ When running with docker-compose, the following variables are set automatically 
 
 **Docker Compose fix:** Confirm the `log-fwd` service is running. Check that `AUDIT_INGEST_SECRET` in `promptshield/.env.local` matches the value passed to the log-fwd container (both default to `dev-ingest-secret`).
 
-**Standalone fix:** Set `PROMPTSHIELD_AUDIT_URL=http://localhost:3000` and `AUDIT_INGEST_SECRET=<value>` in `promptshield-proxy/.env`. The secret must match `AUDIT_INGEST_SECRET` in the dashboard.
+**Standalone fix:** Set `PROMPTSHIELD_AUDIT_URL=http://localhost:3000` and `AUDIT_INGEST_SECRET=<value>` in `promptshield-gateway/.env`. The secret must match `AUDIT_INGEST_SECRET` in the dashboard.

@@ -1,9 +1,9 @@
 ---
 title: PromptShield
-description: Open source LLM gateway. Scans every prompt and response for PII and secrets, enforces policy, and routes to any provider. Runs on your infrastructure.
+description: Open source LLM security platform. Scans every prompt for PII and secrets, enforces policy, and routes to any provider. Runs entirely on your infrastructure.
 ---
 
-Point your SDK at the proxy and it scans every prompt and response, enforces policy, and routes to your provider. No code changes.
+Point your SDK at the gateway and it scans every prompt, enforces policy, and routes to your provider. No code changes to your app.
 
 <img
   src="/images/architecture.png"
@@ -13,47 +13,47 @@ Point your SDK at the proxy and it scans every prompt and response, enforces pol
 
 ## What it catches
 
-- **Secrets**: AWS keys, GitHub tokens, OpenAI keys, Stripe keys, Slack tokens, DB connection strings, private keys
-- **PII**: email, phone, SSN, credit card, IBAN, passport, medical license (30+ types)
-- **Responses**: scans LLM output before it reaches your app
+- **Secrets**: AWS keys, GitHub tokens, OpenAI keys, Anthropic keys, Stripe keys, Slack tokens, DB connection strings, private keys, JWTs
+- **PII**: email, phone, SSN, credit card, IBAN, passport, medical license (30+ types, 6 languages)
+- **Responses**: optionally scans LLM output before it reaches your app
 
-Block or mask per entity type. Policy is a YAML file in your repo.
+Block or mask per entity type. Policy is a YAML file — check it into git, hot-reloads without restart.
 
-## Built to deploy your way
+## Three components
 
-Self-host it and your prompts never leave your servers. Full control, no vendor in the path. Works for regulated industries out of the box.
+|                              | Gateway only | + Engine | + Dashboard |
+| ---------------------------- | :----------: | :------: | :---------: |
+| Provider routing             |      ✓       |    ✓     |      ✓      |
+| Rate limiting                |      ✓       |    ✓     |      ✓      |
+| Token budgets                |      ✓       |    ✓     |      ✓      |
+| API key vault                |      ✓       |    ✓     |      ✓      |
+| Audit logs                   |      ✓       |    ✓     |      ✓      |
+| Prometheus metrics           |      ✓       |    ✓     |      ✓      |
+| Secret detection (150+ rules)|      ✓       |    ✓     |      ✓      |
+| PII detection                |              |    ✓     |      ✓      |
+| Prompt injection detection   |              |    ✓     |      ✓      |
+| Policy enforcement           |              |    ✓     |      ✓      |
+| Response scanning            |              |    ✓     |      ✓      |
+| Policy editor UI             |              |          |      ✓      |
+| Audit log UI                 |              |          |      ✓      |
+| Key management UI            |              |          |      ✓      |
 
-Need a managed setup or help getting started? [Open a discussion](https://github.com/promptshieldhq/promptshield-proxy/discussions).
+Only the gateway is required. Secret detection (Gitleaks, 150+ rules) is built in and runs without the engine. Add the engine for PII and injection detection, and the dashboard for a UI.
 
-## Policy
+## Policy actions
 
 | Action  | Behavior                                                       |
 | ------- | -------------------------------------------------------------- |
 | `block` | HTTP 403. LLM never called. Zero tokens consumed.              |
 | `mask`  | PII replaced with `[ENTITY_TYPE]`. Sanitized prompt forwarded. |
 | `allow` | Passes through unchanged.                                      |
-| `warn`  | Logs and allows. Coming soon.                                  |
-
-## Modes
-
-Set `PROMPTSHIELD_ENGINE_URL` to connect the detection engine.
-
-|                    | Proxy | Proxy + Engine |
-| ------------------ | :---: | :------------: |
-| Rate limiting      |   ✓   |       ✓        |
-| Token tracking     |   ✓   |       ✓        |
-| Provider routing   |   ✓   |       ✓        |
-| Audit logs         |   ✓   |       ✓        |
-| Metrics            |   ✓   |       ✓        |
-| Request scanning   |       |       ✓        |
-| Policy enforcement |       |       ✓        |
-| Response scanning  |       |       ✓        |
+| `warn`  | Log and allow. Coming soon.                                    |
 
 <Cards>
   <Card
     title="Quickstart"
     href="/docs/quickstart"
-    description="Proxy running in one terminal session"
+    description="Gateway running in one terminal session"
   />
   <Card
     title="Secrets Detection"

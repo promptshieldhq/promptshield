@@ -6,33 +6,35 @@ description: One YAML file controls what gets blocked, masked, or allowed per en
 Edit `config/policy.yaml`:
 
 ```yaml
+pii_min_score: 0.70  # global confidence threshold — entities below this are ignored
+
 pii:
-  EMAIL_ADDRESS: mask # replace with [EMAIL_ADDRESS] before the LLM sees it
+  EMAIL_ADDRESS: mask   # replace with [EMAIL_ADDRESS] before the LLM sees it
   PHONE_NUMBER: mask
   IP_ADDRESS: mask
-  CREDIT_CARD: block # reject the request, LLM never called
-  US_SSN: block
+  CREDIT_CARD: block    # reject the request, LLM never called
+  US_SSN:
+    action: block
+    min_score: 0.85     # per-entity threshold overrides pii_min_score for this type
   IBAN_CODE: block
   CRYPTO: block
   MEDICAL_LICENSE: block
-  PERSON: allow # pass through unchanged
+  PERSON: allow         # pass through unchanged
   LOCATION: allow
   DATE_TIME: allow
   URL: allow
 
-secrets:
-  action: block # block any request containing a detected secret
-
 injection:
-  action: block # block | allow (detection not yet active, see note below)
+  action: block
 
 on_detector_error: fail_closed
 ```
 
 <Callout>
   Policy enforcement requires the detection engine. Set
-  `PROMPTSHIELD_ENGINE_URL` to connect it. Without the engine the proxy runs in
-  gateway mode: the policy file loads but nothing is enforced.
+  `PROMPTSHIELD_ENGINE_URL` to connect it. Without the engine the gateway runs
+  in gateway-only mode: secret detection (Gitleaks) is still active, but PII
+  and injection policies are not enforced.
 </Callout>
 
 ## Actions
@@ -45,6 +47,27 @@ on_detector_error: fail_closed
 | `warn`  | Logs the event and audit record, but lets the request through. Coming soon. |
 
 `warn` is useful for rolling out policy changes gradually: run in warn mode, review what would have been blocked in the audit log, tune the config, then switch to `block`.
+
+## Confidence thresholds
+
+`pii_min_score` sets a global floor — any entity with a confidence score below it is ignored before actions are applied. Range: `0.0`–`1.0`. Default: `0` (accept all scores).
+
+Individual entity entries accept a `min_score` field that overrides the global threshold for that type:
+
+```yaml
+pii_min_score: 0.70      # default floor for all entities
+
+pii:
+  US_SSN: block          # shorthand — inherits the 0.70 global floor
+  PERSON:
+    action: allow
+    min_score: 0.90      # only consider PERSON entities with confidence >= 0.90
+  EMAIL_ADDRESS:
+    action: mask
+    min_score: 0.80      # higher bar for email — reduces false positives
+```
+
+Both the shorthand string form (`US_SSN: block`) and the object form are valid and can be mixed freely in the same file.
 
 ## Secrets
 

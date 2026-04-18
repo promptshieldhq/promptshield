@@ -72,7 +72,7 @@ services:
       CORS_ORIGIN: http://localhost:8000
       ENGINE_URL: http://promptshield-engine:4321
       ENGINE_API_KEY: "${ENGINE_API_KEY:-dev-engine-key}"
-      PROXY_URL: http://promptshield-proxy:8080
+      PROXY_URL: http://promptshield-gateway:8080
       POLICY_FILE_PATH: /policy/policy.yaml
       PROXY_ENV_PATH: /policy/proxy.env
       AUDIT_INGEST_SECRET: ${AUDIT_INGEST_SECRET:-dev-ingest-secret}
@@ -102,7 +102,7 @@ services:
       AUDIT_INGEST_SECRET: ${AUDIT_INGEST_SECRET:-dev-ingest-secret}
       AUDIT_SERVER_URL: ${AUDIT_SERVER_URL:-http://ps-server:3000}
       PROXY_LOG_SOURCE: ${PROXY_LOG_SOURCE:-docker}
-      PROXY_CONTAINER_NAME: ${PROXY_CONTAINER_NAME:-promptshield-proxy}
+      PROXY_CONTAINER_NAME: ${PROXY_CONTAINER_NAME:-promptshield-gateway}
       PROXY_LOG_FILE: ${PROXY_LOG_FILE:-/proxy-logs/promptshield.log}
     command: ["sh", "/log-fwd.sh"]
     networks:

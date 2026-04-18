@@ -6,6 +6,6 @@ export const docsContentRoute = "/llms.mdx/docs";
 
 export const gitConfig = {
   user: "promptshieldhq",
-  repo: "promptshield-proxy",
+  repo: "promptshield-gateway",
   branch: "main",
 };
