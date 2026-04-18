@@ -14,7 +14,7 @@
   <a href="https://github.com/orgs/promptshieldhq/discussions">Discussions</a>
 </p>
 
-<video src="./apps/docs/public/images/promptshield.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/1199aa4a-1e13-4bfc-97f6-09b6fdfc4784
 
 ---
 
@@ -31,6 +31,7 @@ Three components:
 
 
 <img src="./apps/docs/public/images/dashboard/dashboard.png" alt="PromptShield dashboard" />
+
 
 ---
 
@@ -126,15 +127,15 @@ bun run dev:docs     # → :4000
 
 ## What gets detected
 
-**Secrets — built into the gateway (no engine needed)**
+**Secrets built into the gateway (no engine needed)**
 
-Powered by [Gitleaks](https://github.com/gitleaks/gitleaks) running in-process in Go. 150+ rules, ~1-3ms per request.
+- Powered by [Gitleaks](https://github.com/gitleaks/gitleaks) running in-process in Go. 150+ rules, ~1-3ms per request.
 
-**PII — requires the detection engine**
+**PII which requires the detection engine**
 
-Powered by [Presidio](https://microsoft.github.io/presidio/) + custom recognizers. Six languages (en / zh / fr / de / ko / ja) with automatic detection.
+- Powered by [Presidio](https://microsoft.github.io/presidio/) + custom recognizers. Six languages (en / zh / fr / de / ko / ja) with automatic detection.
 
-Per-entity confidence thresholds configurable in `presidio_filters.json`.
+- Per-entity confidence thresholds configurable in `presidio_filters.json`.
 
 ---
 
@@ -268,7 +269,7 @@ Prompts never leave your infrastructure. No external API calls for detection.
 
 ## Community
 
-<p align="center">
+<p align="left">
   <a href="https://discord.gg/gJbYyhJU">
     <img src="https://discord.com/api/guilds/1494515139230044261/widget.png?style=banner2" alt="PromptShield Discord" />
   </a>
