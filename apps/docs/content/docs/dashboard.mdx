@@ -21,7 +21,7 @@ The PromptShield dashboard is a self-hosted web app for managing the proxy and e
 
 ## Requirements
 
-- Docker + Docker Compose
+- Runtime option: Docker + Docker Compose, or Bun + PostgreSQL (plain host setup, no Docker)
 - The proxy and engine stacks running (optional — dashboard works standalone)
 
 ## Setup
@@ -73,7 +73,7 @@ cd promptshield-gateway  && docker compose -f docker-compose.dev.yml up -d
 
 All three stacks share the `promptshield` Docker network. The dashboard server reaches the proxy at `promptshield-gateway:8080` and the engine at `promptshield-engine:4321` automatically.
 
-## Without Docker
+## Plain on-prem setup (no Docker)
 
 Run each service directly with Bun:
 
@@ -95,6 +95,25 @@ cd apps/docs && bun run dev --port 4000
 ```
 
 Copy `apps/server/.env.example` to `apps/server/.env` and `apps/web/.env.example` to `apps/web/.env` before starting.
+
+Set these values in `apps/server/.env` for external proxy/engine connectivity:
+
+```bash
+ENGINE_URL=http://<engine-host>:4321
+ENGINE_API_KEY=<engine-api-key>
+PROXY_URL=http://<proxy-host>:8080
+PROXY_ADMIN_TOKEN=<proxy-admin-token>
+AUDIT_SERVER_URL=http://localhost:3000
+PROXY_LOG_SOURCE=file
+PROXY_LOG_FILE=../../proxy-logs/promptshield.log
+```
+
+If your proxy pushes audit events directly, set this in `promptshield-gateway/.env`:
+
+```bash
+PROMPTSHIELD_AUDIT_URL=http://<dashboard-host>:3000
+AUDIT_INGEST_SECRET=<shared-secret>
+```
 
 ## Policy file path
 

@@ -3,9 +3,9 @@ title: Engine
 description: Setup guide for the PromptShield detection engine.
 ---
 
-The detection engine is a Python service. It scans prompts and responses for PII and secrets, and returns results to the proxy for policy enforcement.
+The detection engine is a Python service. It scans prompts and responses for PII and prompt-injection signals, and returns results to the proxy for policy enforcement.
 
-Run it alongside the proxy. The proxy works without it but no scanning or policy enforcement happens.
+Run it alongside the proxy. The proxy still works without it (secrets detection and gateway policy controls stay active), but PII and injection scanning require the engine.
 
 ## Requirements
 
@@ -27,6 +27,38 @@ uv run uvicorn main:app --port 4321
 ```
 
 The engine listens on `:4321` by default.
+
+## Plain on-prem deployment (no Docker)
+
+Use a process manager (systemd, supervisord, or your platform equivalent) and a local env file.
+
+1. Create an env file (example `/etc/promptshield-engine.env`):
+
+```bash
+PROMPTSHIELD_ENGINE_HOST=0.0.0.0
+PROMPTSHIELD_ENGINE_PORT=4321
+PROMPTSHIELD_API_KEY=replace-with-strong-random-value
+PROMPTSHIELD_ALLOW_UNAUTH=false
+PROMPTSHIELD_LOG_LEVEL=INFO
+```
+
+2. Start with uvicorn (same command your service manager should run):
+
+```bash
+uv run uvicorn main:app --host 0.0.0.0 --port 4321
+```
+
+3. Point the proxy and dashboard to this engine URL:
+
+```bash
+# promptshield-gateway/.env
+PROMPTSHIELD_ENGINE_URL=http://<engine-host>:4321
+PROMPTSHIELD_ENGINE_API_KEY=<same-as-PROMPTSHIELD_API_KEY>
+
+# promptshield/apps/server/.env
+ENGINE_URL=http://<engine-host>:4321
+ENGINE_API_KEY=<same-as-PROMPTSHIELD_API_KEY>
+```
 
 ## Run with Docker Compose (dev only)
 
@@ -64,7 +96,7 @@ curl -s http://localhost:4321/health
 
 ## What it detects
 
-- **Secrets**: AWS keys, GitHub tokens, OpenAI keys, Stripe keys, Slack tokens, DB connection strings, private keys
 - **PII**: email, phone, SSN, credit card, IBAN, passport, medical license (30+ types)
+- **Prompt injection**: heuristic patterns for instruction override, jailbreak, and prompt exfiltration attempts
 
-See [Secrets Detection](/docs/secrets) and [Policy](/docs/policy) for configuration.
+See [Policy](/docs/policy) for action configuration.

@@ -257,7 +257,7 @@ function EnginePage() {
                 <textarea
                   value={testText}
                   onChange={(e) => setTestText(e.target.value)}
-                  placeholder={`Try pasting a .env file or a prompt with sensitive data:\n\nAWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE\nOpenAI key: sk-proj-abc123...\nContact: john@company.com`}
+                  placeholder={`Try pasting a .env file or a prompt with sensitive data:\n\nAWS_ACCESS_TOKEN=AKIAIOSFODNN7EXAMPLE\nOpenAI key: sk-proj-abc123...\nContact: john@company.com`}
                   className="w-full h-36 resize-none rounded-md border border-border bg-background p-4 font-mono text-xs text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   spellCheck={false}
                 />
@@ -362,15 +362,15 @@ function EnginePage() {
                   {
                     label: "Credentials",
                     items: [
-                      "AWS_ACCESS_KEY",
-                      "AWS_SECRET_KEY",
-                      "GITHUB_TOKEN",
+                      "AWS_ACCESS_TOKEN",
+                      "AWS_SECRET_ACCESS_KEY",
+                      "GITHUB_PAT",
                       "OPENAI_API_KEY",
-                      "STRIPE_KEY",
-                      "SLACK_TOKEN",
-                      "GOOGLE_API_KEY",
+                      "STRIPE_API_KEY",
+                      "SLACK_BOT_TOKEN",
+                      "GCP_API_KEY",
                       "BEARER_TOKEN",
-                      "API_KEY",
+                      "GENERIC_API_KEY",
                       "PASSWORD",
                       "PRIVATE_KEY",
                     ],

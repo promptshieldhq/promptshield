@@ -18,16 +18,16 @@ https://github.com/user-attachments/assets/1199aa4a-1e13-4bfc-97f6-09b6fdfc4784
 
 ---
 
-PromptShield is an open source LLM security platform. It routes every request through a security gateway that scans for PII and leaked secrets, enforces a YAML policy, and gives you a dashboard to manage policy, review audit logs, and track what's being blocked with no changes to your application code.
+PromptShield is an open source LLM security platform. It places a gateway in front of your model traffic to detect secrets and PII, enforce a YAML policy, and emit audit/metrics data. The dashboard provides policy and operational visibility without SDK changes.
 
-Three components:
+Components:
 
-- **Gateway** : LLM security gateway policy enforcement, multi-provider routing, rate limiting, token budgets, audit logging
-- **Detection Engine** : scans prompts for PII
-- **Dashboard** : policy editor, audit log, key management, metrics
+- **Gateway**: policy enforcement, multi-provider routing, rate limiting, token budgets, audit logging
+- **Detection Engine**: PII scanning and injection detection
+- **Dashboard**: policy editor, audit log, key management, metrics
 
 
-> **Note:** Only the gateway is required. The detection engine and dashboard are optional. The gateway runs standalone with **secret detection (150+ rules via Gitleaks, built-in)**, rate limiting, token budgets, and audit logging. The engine adds PII detection (names, phone numbers, SSNs) and prompt injection detection.
+> **Note:** Only the gateway is required. The detection engine and dashboard are optional. Gateway-only mode includes built-in secret detection (150+ Gitleaks rules), rate limiting, token budgets, and audit logging. Add the engine for PII and injection detection.
 
 
 <img src="./apps/docs/public/images/dashboard/dashboard.png" alt="PromptShield dashboard" />
@@ -37,7 +37,7 @@ Three components:
 
 ## Quickstart
 
-Each component lives in its own repo. Clone all three, then bring them up in order , the main repo creates the shared Docker network that the gateway and engine join.
+Each component lives in its own repo. Start them in order. The main `promptshield` repo creates the shared Docker network and policy volume used by gateway and engine.
 
 **Step 1 : Clone all three repos:**
 
@@ -70,7 +70,7 @@ docker compose -f docker-compose.dev.yml up --build
 
 ```bash
 cd promptshield-gateway
-cp .env.example .env
+cp .env.example .env.local
 # set PROMPTSHIELD_PROVIDER and your LLM provider API key
 
 docker compose -f docker-compose.dev.yml up --build
@@ -84,13 +84,13 @@ docker compose -f docker-compose.dev.yml up --build
 | Engine | http://localhost:4321 |
 | Docs | http://localhost:4000 |
 
-Point your app at `http://localhost:8080/v1`, same OpenAI-compatible API, no other changes.
+Point your app at `http://localhost:8080/v1`. The API is OpenAI-compatible.
 
 ```bash
 # verify the gateway is up
 curl http://localhost:8080/health
 
-# send a prompt with PII — blocked or masked depending on your policy
+# send a prompt with PII; behavior depends on policy (block or mask)
 curl -s -X POST http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
@@ -127,15 +127,14 @@ bun run dev:docs     # → :4000
 
 ## What gets detected
 
-**Secrets built into the gateway (no engine needed)**
+**Secrets (gateway only; no engine required)**
 
 - Powered by [Gitleaks](https://github.com/gitleaks/gitleaks) running in-process in Go. 150+ rules, ~1-3ms per request.
 
-**PII which requires the detection engine**
+**PII (requires detection engine)**
 
-- Powered by [Presidio](https://microsoft.github.io/presidio/) + custom recognizers. Six languages (en / zh / fr / de / ko / ja) with automatic detection.
-
-- Per-entity confidence thresholds configurable in `presidio_filters.json`.
+- Powered by [Presidio](https://microsoft.github.io/presidio/) + custom recognizers. Six languages are supported (en / zh / fr / de / ko / ja).
+- Per-entity confidence thresholds are configurable in `presidio_filters.json`.
 
 ---
 
@@ -152,8 +151,8 @@ pii:
   US_SSN: block
   CREDIT_CARD: block
   EMAIL_ADDRESS: mask
-  AWS_SECRET_KEY: block
-  RSA_PRIVATE_KEY: block
+  AWS_SECRET_ACCESS_KEY: block
+  PRIVATE_KEY: block
 
 injection:
   action: block
@@ -200,7 +199,7 @@ token_limits:
 
 Every request emits a structured NDJSON event to stdout. 
 
-Set `PROMPTSHIELD_AUDIT_URL` to push events directly to the dashboard without a log-forwarder.
+Set `PROMPTSHIELD_AUDIT_URL` to push events directly to the dashboard without the log forwarder.
 
 **Prometheus metrics**
 
@@ -236,7 +235,7 @@ Custom routes override the defaults via `PROMPTSHIELD_MODEL_ROUTES`.
 
 Configure key pools per provider (comma-separated). The gateway round-robins across them — clients never see the real keys.
 
-```
+```sh
 OPENAI_API_KEY=key1,key2,key3
 ANTHROPIC_API_KEY=key1,key2
 ```
@@ -249,7 +248,7 @@ Full SSE streaming support. Token usage is extracted from stream chunks and trac
 
 **Policy hot-reload**
 
-The gateway watches the policy file for changes and reloads atomically, no restart, no dropped requests. If the reload fails, the previous policy stays in place.
+The gateway watches the policy file and reloads atomically. No restart is required and existing traffic is not dropped. If reload fails, the previous policy stays active.
 
 **Self-hosted**
 
@@ -263,7 +262,7 @@ Prompts never leave your infrastructure. No external API calls for detection.
 |---|---|
 | [promptshieldhq/promptshield](https://github.com/promptshieldhq/promptshield) | Dashboard, API server, docs |
 | [promptshieldhq/promptshield-gateway](https://github.com/promptshieldhq/promptshield-gateway) | Gateway, policy enforcement, audit |
-| [promptshieldhq/promptshield-engine](https://github.com/promptshieldhq/promptshield-engine) | PII
+| [promptshieldhq/promptshield-engine](https://github.com/promptshieldhq/promptshield-engine) | PII and injection detection |
 
 ---
 
@@ -275,8 +274,8 @@ Prompts never leave your infrastructure. No external API calls for detection.
   </a>
 </p>
 
-- [Discord](https://discord.gg/gJbYyhJU) : questions and live chat
-- [GitHub Discussions](https://github.com/orgs/promptshieldhq/discussions) : ideas, RFCs, design decisions
+- [Discord](https://discord.gg/gJbYyhJU) - questions and live chat
+- [GitHub Discussions](https://github.com/orgs/promptshieldhq/discussions) - ideas, RFCs, design decisions
 
 ---
 

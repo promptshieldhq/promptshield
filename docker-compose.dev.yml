@@ -23,7 +23,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -71,7 +71,6 @@ services:
       BETTER_AUTH_URL: http://localhost:3000
       CORS_ORIGIN: http://localhost:8000
       ENGINE_URL: http://promptshield-engine:4321
-      ENGINE_API_KEY: "${ENGINE_API_KEY:-dev-engine-key}"
       PROXY_URL: http://promptshield-gateway:8080
       POLICY_FILE_PATH: /policy/policy.yaml
       PROXY_ENV_PATH: /policy/proxy.env

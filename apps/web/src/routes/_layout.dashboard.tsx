@@ -229,7 +229,6 @@ function DashboardPage() {
 
   const threatRate =
     s && s.totalRequests > 0 ? parseFloat(String(s.threatRate)) : null;
-  const passCount = s ? s.totalRequests - s.blockedCount : undefined;
   const isRefreshing =
     stats.isFetching || recentBlocks.isFetching || proxyStatus.isFetching;
 
@@ -316,7 +315,19 @@ function DashboardPage() {
         </div>
 
         {/* Stat tiles  */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Stat
+            label="Total Requests"
+            value={s?.totalRequests?.toLocaleString() ?? (isEmpty ? "—" : "0")}
+            sub={
+              s && s.totalRequests > 0
+                ? `${(s.totalRequests - s.blockedCount).toLocaleString()} processed`
+                : "No traffic in range"
+            }
+            note={noteLabel}
+            accent="default"
+            loading={stats.status === "pending"}
+          />
           <Stat
             label="Threat Rate"
             value={
@@ -343,7 +354,7 @@ function DashboardPage() {
             value={s?.blockedCount?.toLocaleString() ?? (isEmpty ? "—" : "0")}
             sub={
               s && s.totalRequests > 0
-                ? `1 in ${Math.round(s.totalRequests / Math.max(s.blockedCount, 1))} calls intercepted`
+                ? `1 in ${Math.round(s.totalRequests / Math.max(s.blockedCount, 1))} calls`
                 : "No traffic in range"
             }
             note={noteLabel}
@@ -351,15 +362,27 @@ function DashboardPage() {
             loading={stats.status === "pending"}
           />
           <Stat
-            label="LLM Calls"
-            value={s?.totalRequests?.toLocaleString() ?? (isEmpty ? "—" : "0")}
+            label="Allowed"
+            value={s?.allowedCount?.toLocaleString() ?? (isEmpty ? "—" : "0")}
             sub={
-              passCount != null && passCount > 0
-                ? `${passCount.toLocaleString()} forwarded clean`
+              s && s.totalRequests > 0
+                ? `${((s.allowedCount / s.totalRequests) * 100).toFixed(1)}% of traffic`
                 : "No traffic in range"
             }
             note={noteLabel}
-            accent="default"
+            accent="success"
+            loading={stats.status === "pending"}
+          />
+          <Stat
+            label="Masked"
+            value={s?.maskedCount?.toLocaleString() ?? (isEmpty ? "—" : "0")}
+            sub={
+              s && s.totalRequests > 0
+                ? `${((s.maskedCount / s.totalRequests) * 100).toFixed(1)}% of traffic`
+                : "No traffic in range"
+            }
+            note={noteLabel}
+            accent="warning"
             loading={stats.status === "pending"}
           />
         </div>

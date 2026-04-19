@@ -1,9 +1,9 @@
 ---
 title: Quickstart
-description: Get the full PromptShield stack running locally i.e gateway, detection engine, and dashboard.
+description: Run the full PromptShield stack locally: gateway, detection engine, and dashboard.
 ---
 
-By the end of this guide you'll have all three components running, a request going through the gateway, and the engine blocking a leaked API key.
+By the end of this guide, all three components will be running, traffic will flow through the gateway, and detection will block a leaked API key.
 
 Each component lives in its own repo. The main repo (`promptshield`) creates the shared Docker network that the gateway and engine join.
 
@@ -62,7 +62,7 @@ Open a new terminal:
 ```bash
 cd promptshield-gateway
 
-cp .env.example .env
+cp .env.example .env.local
 # Required: PROMPTSHIELD_PROVIDER (gemini | openai | anthropic | selfhosted)
 # Required: your provider API key (e.g. GEMINI_API_KEY)
 # Required: PROMPTSHIELD_ENGINE_URL=http://localhost:4321
@@ -78,11 +78,36 @@ curl -s http://localhost:8080/health
 # {"status":"ok","service":"promptshield-gateway"}
 ```
 
-All three components are now running. The gateway and engine are on the shared `promptshield` Docker network and the dashboard can reach both.
+All three components are now running. Gateway and engine are on the shared `promptshield` Docker network, and the dashboard can reach both.
+
+## Plain on-prem setup (no Docker)
+
+If you are deploying on hosts/VMs without Docker, run each component directly:
+
+1. Engine: follow [Engine](/docs/engine) and run with `uv run uvicorn main:app --host 0.0.0.0 --port 4321`
+2. Gateway: run with your normal process manager and set:
+
+```bash
+PROMPTSHIELD_ENGINE_URL=http://<engine-host>:4321
+PROMPTSHIELD_ENGINE_API_KEY=<engine-api-key>
+PROMPTSHIELD_AUDIT_URL=http://<dashboard-host>:3000
+AUDIT_INGEST_SECRET=<shared-secret>
+```
+
+3. Dashboard: follow [Dashboard](/docs/dashboard) plain setup and set:
+
+```bash
+ENGINE_URL=http://<engine-host>:4321
+ENGINE_API_KEY=<engine-api-key>
+PROXY_URL=http://<gateway-host>:8080
+PROXY_ADMIN_TOKEN=<proxy-admin-token>
+```
+
+Use the same engine key value for `PROMPTSHIELD_API_KEY` (engine), `PROMPTSHIELD_ENGINE_API_KEY` (gateway), and `ENGINE_API_KEY` (dashboard).
 
 ## 5. Send a request
 
-Point your app at `http://localhost:8080/v1` — same OpenAI-compatible API, no code changes.
+Point your app at `http://localhost:8080/v1`. The API is OpenAI-compatible, so existing client code usually does not need changes.
 
 ```bash
 curl -s -X POST http://localhost:8080/v1/chat/completions \
@@ -107,13 +132,13 @@ curl -s -X POST http://localhost:8080/v1/chat/completions \
 # {"error": "request blocked: secret detected in prompt"}
 ```
 
-The LLM was never called. See [Secrets Detection](/docs/secrets) for the full list of detected types.
+The LLM was not called. See [Secrets Detection](/docs/secrets) for the full list of detected types.
 
 ---
 
 ## Gateway only (no dashboard or engine)
 
-If you just want the gateway with rate limiting, token budgets, and audit logging — no scanning, no dashboard:
+If you only need gateway controls (rate limiting, token budgets, audit logging) without engine or dashboard:
 
 ```bash
 cd promptshield-gateway
@@ -129,6 +154,7 @@ make run
 Or with Docker:
 
 ```bash
+cp .env.example .env.local
 docker compose -f docker-compose.dev.yml up --build
 ```
 
@@ -142,7 +168,7 @@ Set `PROMPTSHIELD_ENGINE_URL=none` (or leave it unset) to run in gateway-only mo
 | ---------------- | --------------- | ---------------------------------------- |
 | Gateway          | `:8080`         | LLM traffic, policy enforcement          |
 | Metrics          | `:8080/metrics` | Prometheus, always on                    |
-| Detection engine | `:4321`         | PII and secrets scanning                 |
+| Detection engine | `:4321`         | PII and injection scanning               |
 | API server       | `:3000`         | Dashboard backend                        |
 | Dashboard        | `:8000`         | Policy editor, audit log, key management |
 | Docs             | `:4000`         | This documentation                       |

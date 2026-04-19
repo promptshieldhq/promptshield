@@ -80,6 +80,39 @@ export const dashboardRouter = router({
           ),
         );
 
+      const [allowedResult] = await ctx.db
+        .select({ count: count() })
+        .from(auditEvents)
+        .where(
+          and(
+            ...timeConditions,
+            eq(auditEvents.action, "allowed"),
+            scopedCondition,
+          ),
+        );
+
+      const [maskedResult] = await ctx.db
+        .select({ count: count() })
+        .from(auditEvents)
+        .where(
+          and(
+            ...timeConditions,
+            eq(auditEvents.action, "masked"),
+            scopedCondition,
+          ),
+        );
+
+      const [warnedResult] = await ctx.db
+        .select({ count: count() })
+        .from(auditEvents)
+        .where(
+          and(
+            ...timeConditions,
+            eq(auditEvents.action, "warned"),
+            scopedCondition,
+          ),
+        );
+
       const [activeKeysResult] = await ctx.db
         .select({ count: count() })
         .from(apiKeys)
@@ -103,6 +136,9 @@ export const dashboardRouter = router({
 
       const total = totalResult?.count ?? 0;
       const blocked = blockedResult?.count ?? 0;
+      const allowed = allowedResult?.count ?? 0;
+      const masked = maskedResult?.count ?? 0;
+      const warned = warnedResult?.count ?? 0;
       const active = activeKeysResult?.count ?? 0;
       const totalKeys = totalKeysResult?.count ?? 0;
       const withPolicy = keysWithPolicyResult?.count ?? 0;
@@ -117,6 +153,9 @@ export const dashboardRouter = router({
       return {
         totalRequests: total,
         blockedCount: blocked,
+        allowedCount: allowed,
+        maskedCount: masked,
+        warnedCount: warned,
         threatRate: total > 0 ? ((blocked / total) * 100).toFixed(1) : "0.0",
         activeKeys: active,
         totalKeys,

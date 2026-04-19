@@ -1,7 +1,9 @@
 import { defineConfig } from "drizzle-kit";
 import { config } from "dotenv";
 
-config({ path: ".env", override: true });
+// Load local .env defaults, but do not override DATABASE_URL already provided
+// by the runtime environment (for example docker-compose service env).
+config({ path: ".env", override: false });
 
 export default defineConfig({
   schema: "./src/schema",

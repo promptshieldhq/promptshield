@@ -202,11 +202,11 @@ function AuditPage() {
           <option value="PHONE_NUMBER">PHONE_NUMBER</option>
           <option value="CREDIT_CARD">CREDIT_CARD</option>
           <option value="US_SSN">US_SSN</option>
-          <option value="AWS_ACCESS_KEY">AWS_ACCESS_KEY</option>
-          <option value="GITHUB_TOKEN">GITHUB_TOKEN</option>
+          <option value="AWS_ACCESS_TOKEN">AWS_ACCESS_TOKEN</option>
+          <option value="GITHUB_PAT">GITHUB_PAT</option>
           <option value="PERSON">PERSON</option>
           <option value="IP_ADDRESS">IP_ADDRESS</option>
-          <option value="API_KEY">API_KEY</option>
+          <option value="GENERIC_API_KEY">GENERIC_API_KEY</option>
         </select>
       </div>
 

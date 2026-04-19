@@ -156,11 +156,11 @@ Set both or neither. Setting one without the other is a startup error.
 
 | Variable | Default | Description |
 |---|---|---|
-| `AUDIT_SERVER_URL` | `http://ps-server:3000` | Dashboard URL the log-fwd sidecar POSTs audit lines to |
+| `AUDIT_SERVER_URL` | `http://localhost:3000` | Dashboard URL the log-fwd sidecar POSTs audit lines to |
 | `AUDIT_INGEST_SECRET` | — | Shared secret (must match the dashboard server's `AUDIT_INGEST_SECRET`) |
-| `PROXY_LOG_SOURCE` | `docker` | Log source: `docker` tails container logs, `file` tails a log file, `stdin` reads stdin |
+| `PROXY_LOG_SOURCE` | `file` | Log source: `docker` tails container logs, `file` tails a log file, `stdin` reads stdin |
 | `PROXY_CONTAINER_NAME` | `promptshield-gateway` | Docker container to tail when `PROXY_LOG_SOURCE=docker` |
-| `PROXY_LOG_FILE` | `/proxy-logs/promptshield.log` | Log file to tail when `PROXY_LOG_SOURCE=file` |
+| `PROXY_LOG_FILE` | `../../proxy-logs/promptshield.log` | Log file to tail when `PROXY_LOG_SOURCE=file` |
 
 ---
 
@@ -174,9 +174,12 @@ When running with docker-compose, the following variables are set automatically 
 | `BETTER_AUTH_URL` | `http://localhost:3000` | Injected into the `server` service |
 | `CORS_ORIGIN` | `http://localhost:8000` | Injected into the `server` service |
 | `ENGINE_URL` | `http://promptshield-engine:4321` | Container-network address |
-| `ENGINE_API_KEY` | `${ENGINE_API_KEY:-dev-engine-key}` | Falls back to `dev-engine-key` if not set in `.env.local` |
+| `ENGINE_API_KEY` | `${ENGINE_API_KEY:?set in .env.local}` | Required. Compose fails fast if missing. Must match engine `PROMPTSHIELD_API_KEY`. |
 | `PROXY_URL` | `http://promptshield-gateway:8080` | Container-network address |
 | `VITE_SERVER_URL` | `http://localhost:3000` | Browser-facing; stays as localhost |
+| `AUDIT_SERVER_URL` | `http://ps-server:3000` | Docker-network dashboard address for the log-fwd sidecar |
+| `PROXY_LOG_SOURCE` | `docker` | Docker mode tails the gateway container logs |
+| `PROXY_LOG_FILE` | `/proxy-logs/promptshield.log` | File path used when `PROXY_LOG_SOURCE=file` inside the sidecar |
 
 ---
 

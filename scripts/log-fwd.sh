@@ -6,11 +6,11 @@
 # - stdin:  read log lines from stdin
 set -e
 
-SERVER="${AUDIT_SERVER_URL:-http://ps-server:3000}"
+SERVER="${AUDIT_SERVER_URL:-http://localhost:3000}"
 SECRET="${AUDIT_INGEST_SECRET:-dev-ingest-secret}"
-SOURCE="${PROXY_LOG_SOURCE:-docker}"
+SOURCE="${PROXY_LOG_SOURCE:-file}"
 CONTAINER_NAME="${PROXY_CONTAINER_NAME:-promptshield-gateway}"
-LOG_FILE="${PROXY_LOG_FILE:-/proxy-logs/promptshield.log}"
+LOG_FILE="${PROXY_LOG_FILE:-./proxy-logs/promptshield.log}"
 
 forward_line() {
   line="$1"
