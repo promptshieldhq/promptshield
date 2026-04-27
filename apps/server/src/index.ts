@@ -172,7 +172,7 @@ app.use("/internal/*", async (c, next) => {
 // Internal proxy routes — forward to promptshield-engine
 app.get("/internal/engine/health", async (c) => {
   try {
-    const res = await fetch(`${env.ENGINE_URL}/health`);
+    const res = await fetch(`${env.ENGINE_URL}/health`, { signal: AbortSignal.timeout(3000) });
     const data = await res.json();
     return jsonWithStatus(data, res.status);
   } catch {
@@ -182,7 +182,7 @@ app.get("/internal/engine/health", async (c) => {
 
 app.get("/internal/engine/ready", async (c) => {
   try {
-    const res = await fetch(`${env.ENGINE_URL}/ready`);
+    const res = await fetch(`${env.ENGINE_URL}/ready`, { signal: AbortSignal.timeout(3000) });
     const data = await res.json();
     return jsonWithStatus(data, res.status);
   } catch {
@@ -206,6 +206,7 @@ app.post("/internal/engine/detect", async (c) => {
           : {}),
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
     });
     const data = await res.json();
     return jsonWithStatus(data, res.status);
@@ -276,7 +277,7 @@ app.put("/internal/policy", async (c) => {
 // Proxy health check
 app.get("/internal/proxy/health", async (c) => {
   try {
-    const res = await fetch(`${env.PROXY_URL}/health`);
+    const res = await fetch(`${env.PROXY_URL}/health`, { signal: AbortSignal.timeout(3000) });
     return jsonWithStatus({ online: res.ok, url: env.PROXY_URL }, res.status);
   } catch {
     return c.json({ online: false, url: env.PROXY_URL }, 503);
