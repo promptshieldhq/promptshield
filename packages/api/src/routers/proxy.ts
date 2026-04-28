@@ -269,7 +269,7 @@ function assertSafeEnvValue(field: string, value: string) {
 function isLinkLocalIp(hostOrIp: string): boolean {
   const v = isIP(hostOrIp);
   if (v === 4) {
-    return hostOrIp.startsWith("169.254.");
+    return hostOrIp.startsWith("169.254.") || hostOrIp === "168.63.129.16";
   }
   if (v === 6) {
     const normalized = hostOrIp.toLowerCase();
