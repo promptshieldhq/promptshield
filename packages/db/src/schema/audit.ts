@@ -35,6 +35,7 @@ export const auditEvents = pgTable(
     index("audit_events_timestamp_idx").on(table.timestamp),
     index("audit_events_key_id_idx").on(table.keyId),
     index("audit_events_action_idx").on(table.action),
+    uniqueIndex("audit_events_request_id_idx").on(table.requestId),
   ],
 );
 

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "audit_events_request_id_idx" ON "audit_events" USING btree ("request_id") WHERE "request_id" IS NOT NULL;

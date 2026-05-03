@@ -52,7 +52,7 @@ echo "log-fwd: server ready, starting to forward logs"
 case "$SOURCE" in
   docker)
     echo "log-fwd: source=docker container=$CONTAINER_NAME"
-    if ! docker logs -f "$CONTAINER_NAME" 2>/dev/null | forward_stream; then
+    if ! docker logs --tail 0 -f "$CONTAINER_NAME" 2>/dev/null | forward_stream; then
       echo "log-fwd: ERROR: docker logs failed for container=$CONTAINER_NAME"
       exit 1
     fi
@@ -60,7 +60,7 @@ case "$SOURCE" in
   file)
     echo "log-fwd: source=file path=$LOG_FILE"
     touch "$LOG_FILE"
-    if ! tail -F "$LOG_FILE" 2>/dev/null | forward_stream; then
+    if ! tail -n 0 -F "$LOG_FILE" 2>/dev/null | forward_stream; then
       echo "log-fwd: ERROR: tail failed for path=$LOG_FILE"
       exit 1
     fi
