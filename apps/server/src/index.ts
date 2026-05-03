@@ -157,7 +157,7 @@ app.post("/internal/audit/ingest", async (c) => {
     }
   }
 
-  if (rows.length > 0) await db.insert(auditEvents).values(rows);
+  if (rows.length > 0) await db.insert(auditEvents).values(rows).onConflictDoNothing();
   return c.json({ inserted: rows.length });
 });
 
