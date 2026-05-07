@@ -102,11 +102,16 @@ function AuditPage() {
     <div className="flex min-h-full flex-col">
       {/* Header */}
       
-      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur-sm">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-sm font-semibold text-foreground">Audit Log</h1>
+      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-[var(--dev-border)] bg-[var(--dev-bg)]/95 px-6 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+            ~/
+          </span>
+          <h1 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+            audit
+          </h1>
           {!events.isLoading && (
-            <span className="rounded-full border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="mono rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-2 py-0.5 text-[10px] font-medium text-[var(--dev-text-dim)]">
               {rows.length > 0
                 ? `${rows.length}${rows.length === 50 ? "+" : ""} events`
                 : "0 events"}
@@ -116,10 +121,10 @@ function AuditPage() {
         <button
           onClick={exportJson}
           disabled={rows.length === 0}
-          className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+          className="mono flex items-center gap-1.5 rounded border border-[var(--dev-border)] px-3 py-1.5 text-[11px] font-medium text-[var(--dev-text-dim)] transition-colors hover:bg-[var(--dev-panel)] hover:text-[var(--dev-text)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Download size={12} aria-hidden="true" />
-          Export JSON
+          export.json
         </button>
       </header>
 
@@ -260,7 +265,7 @@ function AuditPage() {
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Try adjusting your filters or send traffic through the
-                    proxy.
+                    gateway.
                   </p>
                 </td>
               </tr>

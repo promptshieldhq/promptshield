@@ -167,7 +167,7 @@ function parsePolicy(yaml: string): PolicyState {
 
 function buildPolicy(state: PolicyState): string {
   const lines: string[] = [
-    "# PromptShield proxy policy",
+    "# PromptShield gateway policy",
     "# actions: allow | mask | block",
     "",
     `pii_min_score: ${state.piiMinScore.toFixed(2)}`,
@@ -253,7 +253,7 @@ function PolicyPage() {
   const saveFile = useMutation(
     trpc.policies.saveToFile.mutationOptions({
       onSuccess: () => {
-        toast.success("Policy saved — proxy hot-reloaded");
+        toast.success("Policy saved — gateway hot-reloaded");
         // Refetch first, then clear the local edit.
         currentFile.refetch().then(() => setEditedYaml(null));
       },
@@ -285,8 +285,8 @@ function PolicyPage() {
   const isDirty = editedYaml !== null && editedYaml !== yamlContent;
   const loading = currentFile.isPending;
   const source = sourceInfo.data?.source ?? "local_file";
-  const sourceLabel = source === "proxy_api" ? "Proxy API" : "Local File";
-  const target = currentFile.data?.target ?? sourceInfo.data?.proxyPolicyEndpoint;
+  const sourceLabel = source === "gateway_api" ? "Gateway API" : "Local File";
+  const target = currentFile.data?.target ?? sourceInfo.data?.gatewayPolicyEndpoint;
 
   // Coverage counts
   const configured = Object.entries(policy.entities);
@@ -302,23 +302,28 @@ function PolicyPage() {
   return (
     <div className="flex min-h-full flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur-sm">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-sm font-semibold text-foreground">Policy</h1>
+      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-[var(--dev-border)] bg-[var(--dev-bg)]/95 px-6 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+            ~/
+          </span>
+          <h1 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+            policy
+          </h1>
           {!sourceInfo.isPending && (
-            <span className="inline-flex items-center gap-1 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            <span className="mono inline-flex items-center gap-1 rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--dev-text-dim)]">
               <Server size={10} aria-hidden="true" />
               {sourceLabel}
             </span>
           )}
           {!isDirty && !loading && (
-            <span className="rounded border border-success/30 bg-success/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
-              Active
+            <span className="mono rounded border border-[var(--dev-green)]/30 bg-[var(--dev-green)]/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[var(--dev-green)]">
+              active
             </span>
           )}
           {isDirty && (
-            <span className="rounded border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
-              Unsaved changes
+            <span className="mono rounded border border-[var(--dev-amber)]/30 bg-[var(--dev-amber)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[var(--dev-amber)]">
+              unsaved
             </span>
           )}
         </div>
@@ -330,7 +335,7 @@ function PolicyPage() {
             }}
             disabled={currentFile.isFetching}
             aria-label="Reload from file"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+            className="flex h-8 w-8 items-center justify-center rounded border border-[var(--dev-border)] text-[var(--dev-text-dim)] transition-colors hover:bg-[var(--dev-panel)] hover:text-[var(--dev-text)] disabled:opacity-40"
           >
             <RefreshCw
               size={13}
@@ -343,9 +348,13 @@ function PolicyPage() {
           <button
             onClick={() => saveFile.mutate({ content: activeYaml })}
             disabled={saveFile.isPending || !isDirty}
-            className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-40"
+            className="mono btn-press flex items-center gap-1.5 rounded px-4 py-1.5 text-[12px] font-semibold transition-colors disabled:opacity-40"
+            style={{
+              backgroundColor: "var(--dev-accent)",
+              color: "var(--dev-bg)",
+            }}
           >
-            {saveFile.isPending ? "Saving…" : "Save Policy"}
+            {saveFile.isPending ? "saving…" : "save policy →"}
           </button>
         </div>
       </header>
@@ -707,7 +716,7 @@ function PolicyPage() {
                   <code className="rounded bg-muted/60 px-1 font-mono text-[10px]">
                     policy.yaml
                   </code>{" "}
-                  directly. The proxy hot-reloads on save — no restart required.
+                  directly. The gateway hot-reloads on save; no restart required.
                 </p>
               </div>
               <textarea

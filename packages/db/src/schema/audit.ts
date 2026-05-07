@@ -14,6 +14,7 @@ export const actionEnum = pgEnum("action", [
   "blocked",
   "masked",
   "warned",
+  "errored",
 ]);
 
 export const auditEvents = pgTable(

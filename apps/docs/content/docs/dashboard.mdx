@@ -1,10 +1,10 @@
 ---
 title: Dashboard
-description: Web UI for managing PromptShield — policy editor, audit log, proxy config, and API keys.
+description: Web UI for managing PromptShield — policy editor, audit log, gateway config, and API keys.
 ---
 
 
-The PromptShield dashboard is a self-hosted web app for managing the proxy and engine without touching config files directly.
+The PromptShield dashboard is a self-hosted web app for managing the gateway and engine without touching config files directly.
 
 <figure>
 	<img src="/images/dashboard/dashboard.png" alt="PromptShield dashboard overview showing threat rate, recent blocks, and entity distribution" />
@@ -13,16 +13,16 @@ The PromptShield dashboard is a self-hosted web app for managing the proxy and e
 
 **What it does:**
 
-- Edit `policy.yaml` visually or as raw YAML — changes hot-reload into the proxy
+- Edit `policy.yaml` visually or as raw YAML; changes hot-reload into the gateway
 - Browse and filter the audit log (blocked requests, detected entity types)
 - Manage API keys and assign per-key policies
-- Configure proxy and engine URLs, provider settings, and API keys
-- View live proxy and engine health
+- Configure gateway and engine URLs, provider settings, and API keys
+- View live gateway and engine health
 
 ## Requirements
 
 - Runtime option: Docker + Docker Compose, or Bun + PostgreSQL (plain host setup, no Docker)
-- The proxy and engine stacks running (optional — dashboard works standalone)
+- The gateway and engine stacks running (optional; dashboard works standalone)
 
 ## Setup
 
@@ -62,16 +62,16 @@ This starts PostgreSQL, runs DB migrations, seeds the policy volume, and starts 
 | API server | `http://localhost:3000` | Backend |
 | Docs       | `http://localhost:4000` | This site        |
 
-## Connecting to the proxy and engine
+## Connecting to the gateway and engine
 
-Start the engine and proxy stacks first:
+Start the engine and gateway stacks first:
 
 ```bash
 cd promptshield-engine && docker compose -f docker-compose.dev.yml up -d
 cd promptshield-gateway  && docker compose -f docker-compose.dev.yml up -d
 ```
 
-All three stacks share the `promptshield` Docker network. The dashboard server reaches the proxy at `promptshield-gateway:8080` and the engine at `promptshield-engine:4321` automatically.
+All three stacks share the `promptshield` Docker network. The dashboard server reaches the gateway at `promptshield-gateway:8080` and the engine at `promptshield-engine:4321` automatically.
 
 ## Plain on-prem setup (no Docker)
 
@@ -96,19 +96,19 @@ cd apps/docs && bun run dev --port 4000
 
 Copy `apps/server/.env.example` to `apps/server/.env` and `apps/web/.env.example` to `apps/web/.env` before starting.
 
-Set these values in `apps/server/.env` for external proxy/engine connectivity:
+Set these values in `apps/server/.env` for external gateway/engine connectivity:
 
 ```bash
 ENGINE_URL=http://<engine-host>:4321
 ENGINE_API_KEY=<engine-api-key>
-PROXY_URL=http://<proxy-host>:8080
-PROXY_ADMIN_TOKEN=<proxy-admin-token>
+GATEWAY_URL=http://<gateway-host>:8080
+GATEWAY_ADMIN_TOKEN=<gateway-admin-token>
 AUDIT_SERVER_URL=http://localhost:3000
-PROXY_LOG_SOURCE=file
-PROXY_LOG_FILE=../../proxy-logs/promptshield.log
+GATEWAY_LOG_SOURCE=file
+GATEWAY_LOG_FILE=../../gateway-logs/promptshield.log
 ```
 
-If your proxy pushes audit events directly, set this in `promptshield-gateway/.env`:
+If your gateway pushes audit events directly, set this in `promptshield-gateway/.env`:
 
 ```bash
 PROMPTSHIELD_AUDIT_URL=http://<dashboard-host>:3000

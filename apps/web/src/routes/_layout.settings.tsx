@@ -22,29 +22,36 @@ function SettingsPage() {
   return (
     <div className="flex min-h-full flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex h-[52px] items-center border-b border-border bg-background/95 px-6 backdrop-blur-sm">
-        <h1 className="text-sm font-semibold text-foreground">Settings</h1>
+      <header className="sticky top-0 z-10 flex h-[52px] items-center gap-3 border-b border-[var(--dev-border)] bg-[var(--dev-bg)]/95 px-6 backdrop-blur-sm">
+        <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+          ~/
+        </span>
+        <h1 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+          settings
+        </h1>
       </header>
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mx-auto w-full max-w-2xl space-y-5">
           {/* Profile */}
-          <section className="overflow-hidden rounded-lg border border-border bg-card">
-            <div className="border-b border-border px-5 py-3">
-              <h2 className="text-xs font-semibold text-foreground">Profile</h2>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+          <section className="overflow-hidden rounded border border-[var(--dev-border)] bg-[var(--dev-panel)]">
+            <div className="border-b border-[var(--dev-border)] px-5 py-3">
+              <h2 className="mono text-[11px] uppercase tracking-widest text-[var(--dev-text-dim)]">
+                # profile
+              </h2>
+              <p className="mt-0.5 text-[11px] text-[var(--dev-text-mute)]">
                 Your account information.
               </p>
             </div>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-[var(--dev-border)]">
               {[
                 {
-                  label: "Name",
+                  label: "name",
                   value: session?.user.name ?? "—",
                   mono: false,
                 },
                 {
-                  label: "Email",
+                  label: "email",
                   value: session?.user.email ?? "—",
                   mono: true,
                 },
@@ -53,9 +60,11 @@ function SettingsPage() {
                   key={f.label}
                   className="flex items-center justify-between px-5 py-3.5"
                 >
-                  <p className="text-xs text-muted-foreground/70">{f.label}</p>
+                  <p className="mono text-[11px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+                    {f.label}
+                  </p>
                   <p
-                    className={`text-xs text-foreground ${f.mono ? "font-mono" : "font-medium"}`}
+                    className={`text-[12px] text-[var(--dev-text)] ${f.mono ? "mono" : "font-medium"}`}
                   >
                     {f.value}
                   </p>
@@ -65,29 +74,31 @@ function SettingsPage() {
           </section>
 
           {/* Session */}
-          <section className="overflow-hidden rounded-lg border border-border bg-card">
-            <div className="border-b border-border px-5 py-3">
-              <h2 className="text-xs font-semibold text-foreground">Session</h2>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
+          <section className="overflow-hidden rounded border border-[var(--dev-border)] bg-[var(--dev-panel)]">
+            <div className="border-b border-[var(--dev-border)] px-5 py-3">
+              <h2 className="mono text-[11px] uppercase tracking-widest text-[var(--dev-text-dim)]">
+                # session
+              </h2>
+              <p className="mt-0.5 text-[11px] text-[var(--dev-text-mute)]">
                 Manage your active session.
               </p>
             </div>
             <div className="px-5 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-foreground">
-                    Sign out
+                  <p className="mono text-[12px] font-medium text-[var(--dev-text)]">
+                    sign out
                   </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  <p className="mt-0.5 text-[11px] text-[var(--dev-text-mute)]">
                     You will be redirected to the login page.
                   </p>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+                  className="mono flex items-center gap-2 rounded border border-[var(--dev-red,#F07A7A)]/30 bg-[var(--dev-red,#F07A7A)]/5 px-3 py-2 text-[12px] font-medium text-[var(--dev-red,#F07A7A)] transition-colors hover:bg-[var(--dev-red,#F07A7A)]/10"
                 >
-                  <LogOut size={13} aria-hidden="true" />
-                  Sign out
+                  <LogOut size={12} aria-hidden="true" />
+                  sign out
                 </button>
               </div>
             </div>

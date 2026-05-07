@@ -10,6 +10,7 @@ import { readFile, writeFile } from "fs/promises";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { streamSSE } from "hono/streaming";
 
 type AuthSession = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
 
@@ -116,16 +117,19 @@ app.post("/internal/audit/ingest", async (c) => {
     | "blocked"
     | "masked"
     | "warned"
+    | "errored"
     | null {
     if (action === "allow") return "allowed";
     if (action === "block") return "blocked";
     if (action === "mask") return "masked";
     if (action === "warn") return "warned";
+    if (action === "error") return "errored";
     if (
       action === "allowed" ||
       action === "blocked" ||
       action === "masked" ||
-      action === "warned"
+      action === "warned" ||
+      action === "errored"
     ) {
       return action;
     }
@@ -157,9 +161,37 @@ app.post("/internal/audit/ingest", async (c) => {
     }
   }
 
-  if (rows.length > 0) await db.insert(auditEvents).values(rows).onConflictDoNothing();
+  if (rows.length > 0) {
+    await db.insert(auditEvents).values(rows).onConflictDoNothing();
+    auditBroadcaster.publish({
+      type: "audit",
+      count: rows.length,
+      latestTimestamp: rows[rows.length - 1]!.timestamp?.toISOString(),
+    });
+  }
   return c.json({ inserted: rows.length });
 });
+
+// In-process pub/sub for live audit-event notifications (single-instance only).
+type AuditTick = { type: "audit"; count: number; latestTimestamp?: string };
+const auditBroadcaster = (() => {
+  const subs = new Set<(tick: AuditTick) => void>();
+  return {
+    subscribe(cb: (tick: AuditTick) => void) {
+      subs.add(cb);
+      return () => subs.delete(cb);
+    },
+    publish(tick: AuditTick) {
+      for (const cb of subs) {
+        try {
+          cb(tick);
+        } catch {
+          // never let one bad subscriber poison the rest
+        }
+      }
+    },
+  };
+})();
 
 // Require a valid session for all other /internal/* routes
 app.use("/internal/*", async (c, next) => {
@@ -169,7 +201,35 @@ app.use("/internal/*", async (c, next) => {
   await next();
 });
 
-// Internal proxy routes — forward to promptshield-engine
+// SSE: notifies subscribers (the dashboard) the moment new audit rows are ingested.
+// Session-protected via the /internal/* middleware above.
+app.get("/internal/audit/stream", (c) => {
+  return streamSSE(c, async (stream) => {
+    let unsub: (() => void) | undefined;
+    const closed = new Promise<void>((resolve) => {
+      unsub = auditBroadcaster.subscribe((tick) => {
+        stream
+          .writeSSE({ event: "audit", data: JSON.stringify(tick) })
+          .catch(() => resolve());
+      });
+      stream.onAbort(() => resolve());
+    });
+
+    // Initial hello so the client knows the stream is open.
+    await stream.writeSSE({ event: "ready", data: "ok" });
+
+    // Periodic heartbeat keeps proxies/load-balancers from killing the connection.
+    const heartbeat = setInterval(() => {
+      stream.writeSSE({ event: "ping", data: String(Date.now()) }).catch(() => {});
+    }, 25_000);
+
+    await closed;
+    clearInterval(heartbeat);
+    unsub?.();
+  });
+});
+
+// Internal gateway routes; forward to promptshield-engine
 app.get("/internal/engine/health", async (c) => {
   try {
     const res = await fetch(`${env.ENGINE_URL}/health`, { signal: AbortSignal.timeout(3000) });
@@ -274,13 +334,13 @@ app.put("/internal/policy", async (c) => {
   }
 });
 
-// Proxy health check
-app.get("/internal/proxy/health", async (c) => {
+// Gateway health check
+app.get("/internal/gateway/health", async (c) => {
   try {
-    const res = await fetch(`${env.PROXY_URL}/health`, { signal: AbortSignal.timeout(3000) });
-    return jsonWithStatus({ online: res.ok, url: env.PROXY_URL }, res.status);
+    const res = await fetch(`${env.GATEWAY_URL}/health`, { signal: AbortSignal.timeout(3000) });
+    return jsonWithStatus({ online: res.ok, url: env.GATEWAY_URL }, res.status);
   } catch {
-    return c.json({ online: false, url: env.PROXY_URL }, 503);
+    return c.json({ online: false, url: env.GATEWAY_URL }, 503);
   }
 });
 

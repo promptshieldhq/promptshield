@@ -38,25 +38,40 @@ export const Route = createFileRoute("/_layout")({
 type NavItem = {
   to: string;
   label: string;
+  cmd: string;
   icon: ElementType;
   soon?: boolean;
 };
 
 const navSections: { label: string; items: NavItem[] }[] = [
   {
-    label: "Overview",
-    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
-  },
-  {
-    label: "Security",
+    label: "overview",
     items: [
-      { to: "/policy", label: "Policy", icon: ShieldCheck },
-      { to: "/audit", label: "Audit Log", icon: ScrollText },
+      {
+        to: "/dashboard",
+        label: "dashboard",
+        cmd: "dash",
+        icon: LayoutDashboard,
+      },
     ],
   },
   {
-    label: "System",
-    items: [{ to: "/config", label: "Configuration", icon: SlidersHorizontal }],
+    label: "security",
+    items: [
+      { to: "/policy", label: "policy", cmd: "policy", icon: ShieldCheck },
+      { to: "/audit", label: "audit", cmd: "audit", icon: ScrollText },
+    ],
+  },
+  {
+    label: "system",
+    items: [
+      {
+        to: "/config",
+        label: "config",
+        cmd: "config",
+        icon: SlidersHorizontal,
+      },
+    ],
   },
 ];
 
@@ -65,11 +80,11 @@ function NavLink({ item }: { item: NavItem }) {
 
   if (soon) {
     return (
-      <div className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground/35 cursor-not-allowed select-none">
-        <Icon size={14} className="shrink-0" />
+      <div className="mono flex items-center gap-2.5 rounded px-3 py-1.5 text-[12px] text-[var(--dev-text-mute)]/60 cursor-not-allowed select-none">
+        <Icon size={12} className="shrink-0" />
         <span className="flex-1 truncate">{label}</span>
-        <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider bg-border/60 text-muted-foreground/50">
-          Soon
+        <span className="mono shrink-0 px-1.5 py-0.5 text-[9px] uppercase tracking-widest text-[var(--dev-text-mute)]/70">
+          soon
         </span>
       </div>
     );
@@ -78,13 +93,17 @@ function NavLink({ item }: { item: NavItem }) {
   return (
     <Link
       to={to}
-      className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors duration-100 hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="mono group flex items-center gap-2.5 rounded px-3 py-1.5 text-[12px] text-[var(--dev-text-dim)] border border-transparent transition-colors hover:bg-[var(--dev-panel)] hover:text-[var(--dev-text)]"
       activeProps={{
         className:
-          "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-foreground bg-accent",
+          "mono group flex items-center gap-2.5 rounded px-3 py-1.5 text-[12px] text-[var(--dev-text)] bg-[rgba(122,162,255,0.10)] border border-[rgba(122,162,255,0.25)] is-active",
       }}
     >
-      <Icon size={14} className="shrink-0" aria-hidden="true" />
+      <Icon
+        size={12}
+        className="shrink-0 text-[var(--dev-text-mute)] group-[.is-active]:text-[var(--dev-accent)]"
+        aria-hidden="true"
+      />
       <span className="truncate">{label}</span>
     </Link>
   );
@@ -92,26 +111,34 @@ function NavLink({ item }: { item: NavItem }) {
 
 function LayoutComponent() {
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-[var(--dev-bg)]">
       {/* Sidebar */}
-      <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-sidebar">
-        {/* Wordmark */}
-        <div className="flex h-[52px] items-center border-b border-border px-4">
-          <span className="text-[13px] font-semibold text-foreground tracking-tight">
-            PromptShield
-          </span>
+      <aside className="flex w-56 shrink-0 flex-col border-r border-[var(--dev-border)] bg-[var(--sidebar)]">
+        {/* Wordmark — terminal prompt */}
+        <div className="flex h-[52px] items-center border-b border-[var(--dev-border)] px-4">
+          <Link
+            to="/dashboard"
+            className="mono flex items-center gap-1.5 text-[13px] font-semibold tracking-tight"
+          >
+            <span style={{ color: "var(--dev-accent)" }}>$</span>
+            <span style={{ color: "var(--dev-text)" }}>prompt</span>
+            <span style={{ color: "var(--dev-text-mute)" }}>/shield</span>
+          </Link>
         </div>
 
         {/* Nav sections */}
         <nav
-          className="flex-1 overflow-y-auto px-2 py-3 space-y-4"
+          className="flex-1 overflow-y-auto px-2 py-4 space-y-5"
           aria-label="Main navigation"
         >
           {navSections.map((section) => (
             <div key={section.label}>
-              <p className="mb-1 px-3 text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70">
-                {section.label}
-              </p>
+              <div className="mb-2 flex items-center gap-2 px-3">
+                <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+                  # {section.label}
+                </span>
+                <div className="h-px flex-1 bg-[var(--dev-border)]" />
+              </div>
               <div className="space-y-0.5">
                 {section.items.map((item) => (
                   <NavLink key={item.to} item={item} />
@@ -122,16 +149,21 @@ function LayoutComponent() {
         </nav>
 
         {/* Bottom panel */}
-        <div className="border-t border-border px-2 py-2 space-y-0.5">
+        <div className="border-t border-[var(--dev-border)] px-2 py-2 space-y-0.5">
           <NavLink
-            item={{ to: "/settings", label: "Settings", icon: Settings }}
+            item={{
+              to: "/settings",
+              label: "settings",
+              cmd: "settings",
+              icon: Settings,
+            }}
           />
           <UserMenu />
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto bg-[var(--dev-bg)]">
         <Outlet />
       </main>
     </div>

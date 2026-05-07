@@ -1,20 +1,17 @@
 #!/bin/sh
-# Forwards proxy NDJSON audit events to the dashboard ingest endpoint.
-# Supported sources:
-# - docker: tail docker logs for a container
-# - file:   tail a host-mounted log file
-# - stdin:  read log lines from stdin
+# Forward gateway NDJSON audit events to the dashboard ingest endpoint.
+# Sources: docker | file | stdin
 set -e
 
 SERVER="${AUDIT_SERVER_URL:-http://localhost:3000}"
 SECRET="${AUDIT_INGEST_SECRET:-dev-ingest-secret}"
-SOURCE="${PROXY_LOG_SOURCE:-file}"
-CONTAINER_NAME="${PROXY_CONTAINER_NAME:-promptshield-gateway}"
-LOG_FILE="${PROXY_LOG_FILE:-./proxy-logs/promptshield.log}"
+SOURCE="${GATEWAY_LOG_SOURCE:-file}"
+CONTAINER_NAME="${GATEWAY_CONTAINER_NAME:-promptshield-gateway}"
+LOG_FILE="${GATEWAY_LOG_FILE:-./gateway-logs/promptshield.log}"
 
 forward_line() {
   line="$1"
-  # Accept either raw JSON lines or prefixed logs that contain a JSON object.
+  # Accept raw JSON or prefixed lines containing a JSON object.
   json="$(printf '%s' "$line" | sed -n 's/^[^{]*\({.*\)$/\1/p')"
   if [ -z "$json" ]; then
     return 0
@@ -52,10 +49,43 @@ echo "log-fwd: server ready, starting to forward logs"
 case "$SOURCE" in
   docker)
     echo "log-fwd: source=docker container=$CONTAINER_NAME"
-    if ! docker logs --tail 0 -f "$CONTAINER_NAME" 2>/dev/null | forward_stream; then
-      echo "log-fwd: ERROR: docker logs failed for container=$CONTAINER_NAME"
+
+    # Check docker access before waiting.
+    if ! docker version --format '{{.Server.Version}}' >/dev/null 2>&1; then
+      echo "log-fwd: ERROR: cannot reach docker daemon — is /var/run/docker.sock mounted?" >&2
       exit 1
     fi
+
+    # Wait for the container; otherwise `docker logs` exits 0 and we restart-loop.
+    waited=0
+    last_state=""
+    while true; do
+      state="$(docker inspect -f '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo missing)"
+      if [ "$state" = "running" ]; then break; fi
+
+      if [ $waited -gt 120 ]; then
+        echo "log-fwd: ERROR: container '$CONTAINER_NAME' not running after 120s (last state: $state)" >&2
+        if [ "$state" = "missing" ]; then
+          echo "log-fwd: hint: the gateway service isn't started. Bring it up with:" >&2
+          echo "         docker compose -f docker-compose.dev.yml up -d gateway" >&2
+        fi
+        exit 1
+      fi
+      # Log only on state changes to avoid spam.
+      if [ "$state" != "$last_state" ]; then
+        echo "log-fwd: waiting for container '$CONTAINER_NAME' (state=$state)..."
+        last_state="$state"
+      fi
+      waited=$((waited + 2))
+      sleep 2
+    done
+    echo "log-fwd: container '$CONTAINER_NAME' is running, attaching to logs"
+
+    docker logs --tail 0 -f "$CONTAINER_NAME" | forward_stream
+    rc=$?
+    echo "log-fwd: docker logs stream ended (rc=$rc) for container=$CONTAINER_NAME" >&2
+    # Exit non-zero so restart policy re-waits for the container.
+    exit "${rc:-1}"
     ;;
   file)
     echo "log-fwd: source=file path=$LOG_FILE"
@@ -70,7 +100,7 @@ case "$SOURCE" in
     forward_stream
     ;;
   *)
-    echo "log-fwd: ERROR: unsupported PROXY_LOG_SOURCE=$SOURCE (expected: docker|file|stdin)"
+    echo "log-fwd: ERROR: unsupported GATEWAY_LOG_SOURCE=$SOURCE (expected: docker|file|stdin)"
     exit 1
     ;;
 esac

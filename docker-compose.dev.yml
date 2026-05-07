@@ -71,9 +71,10 @@ services:
       BETTER_AUTH_URL: http://localhost:3000
       CORS_ORIGIN: http://localhost:8000
       ENGINE_URL: http://promptshield-engine:4321
-      PROXY_URL: http://promptshield-gateway:8080
+      ENGINE_API_KEY: ${PROMPTSHIELD_ENGINE_API_KEY:-dev-engine-api-key}
+      GATEWAY_URL: http://promptshield-gateway:8080
       POLICY_FILE_PATH: /policy/policy.yaml
-      PROXY_ENV_PATH: /policy/proxy.env
+      GATEWAY_ENV_PATH: /policy/gateway.env
       AUDIT_INGEST_SECRET: ${AUDIT_INGEST_SECRET:-dev-ingest-secret}
       CONFIG_ADMIN_EMAILS: ${CONFIG_ADMIN_EMAILS:-admin@admin.com,test@example.com}
     volumes:
@@ -90,24 +91,26 @@ services:
       init-policy:
         condition: service_completed_successfully
 
+  # Forwards gateway audit NDJSON to the dashboard. Enable: --profile logs.
+  # Default tails `docker logs`; override with GATEWAY_LOG_SOURCE.
   log-fwd:
     image: docker:27-cli
     container_name: ps-log-fwd
+    profiles: ["logs"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./scripts/log-fwd.sh:/log-fwd.sh:ro
-      - ./proxy-logs:/proxy-logs
     environment:
       AUDIT_INGEST_SECRET: ${AUDIT_INGEST_SECRET:-dev-ingest-secret}
       AUDIT_SERVER_URL: ${AUDIT_SERVER_URL:-http://ps-server:3000}
-      PROXY_LOG_SOURCE: ${PROXY_LOG_SOURCE:-docker}
-      PROXY_CONTAINER_NAME: ${PROXY_CONTAINER_NAME:-promptshield-gateway}
-      PROXY_LOG_FILE: ${PROXY_LOG_FILE:-/proxy-logs/promptshield.log}
+      GATEWAY_LOG_SOURCE: ${GATEWAY_LOG_SOURCE:-docker}
+      GATEWAY_CONTAINER_NAME: ${GATEWAY_CONTAINER_NAME:-promptshield-gateway}
     command: ["sh", "/log-fwd.sh"]
     networks:
       - promptshield
     depends_on:
-      - server
+      server:
+        condition: service_started
     restart: unless-stopped
 
   web:

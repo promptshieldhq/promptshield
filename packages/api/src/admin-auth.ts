@@ -42,7 +42,7 @@ export function requireConfigAdmin(
   if (!isConfigAdmin(session, configuredEmailsRaw)) {
     throw new TRPCError({
       code: "FORBIDDEN",
-      message: "Only configured admins can change proxy or policy settings",
+      message: "Only configured admins can change gateway or policy settings",
     });
   }
 }

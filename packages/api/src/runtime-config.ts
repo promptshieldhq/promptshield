@@ -46,7 +46,7 @@ export function normalizePolicyPath(inputPath: string): string | null {
 
 interface RuntimeConfig {
   policyFilePath?: string;
-  proxyUrl?: string;
+  gatewayUrl?: string;
   engineUrl?: string;
 }
 
@@ -85,9 +85,9 @@ export async function getEffectivePolicyPath(): Promise<string> {
   return fallback ?? DEFAULT_POLICY_PATH;
 }
 
-export async function getEffectiveProxyUrl(): Promise<string> {
+export async function getEffectiveGatewayUrl(): Promise<string> {
   const cfg = await readRuntimeConfig();
-  return cfg.proxyUrl ?? env.PROXY_URL;
+  return cfg.gatewayUrl ?? env.GATEWAY_URL;
 }
 
 export async function getEffectiveEngineUrl(): Promise<string> {

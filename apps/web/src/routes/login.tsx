@@ -26,61 +26,124 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
 
+  const features = [
+    "PII detection across 30+ entity types",
+    "Secrets: API keys, tokens, credentials",
+    "Policy-as-code via YAML",
+    "Self-hosted: prompts never leave your infra",
+  ];
+
   return (
-    <div className="flex min-h-screen">
+    <div className="relative flex min-h-screen bg-[var(--dev-bg)]">
+      {/* Background grid + glow */}
+      <div className="pointer-events-none absolute inset-0 dev-grid opacity-50" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[640px] dev-glow" />
+
       {/* Left — brand panel */}
-      <div className="hidden lg:flex w-[45%] flex-col justify-between bg-foreground px-12 py-10">
-        <span className="font-display text-base font-bold tracking-tight text-background">
-          PromptShield
-        </span>
-
-        <div className="space-y-6">
-          <h1 className="font-display text-4xl font-bold leading-tight text-background">
-            Secure every LLM request.
-            <br />
-            Before it leaves
-            <br />
-            your infrastructure.
-          </h1>
-          <p className="text-base text-background/60 leading-relaxed max-w-sm">
-            Drop-in security proxy for OpenAI, Anthropic, and Gemini. Detects
-            PII, secrets, and prompt injection — zero code changes required.
-          </p>
-
-          <div className="space-y-3 pt-2">
-            {[
-              "PII detection across 30+ entity types",
-              "Secrets detection — API keys, tokens, credentials",
-              "Policy-as-code via YAML",
-              "Self-hosted — prompts never leave your infra",
-            ].map((f) => (
-              <div key={f} className="flex items-center gap-3">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                <span className="text-sm text-background/70">{f}</span>
-              </div>
-            ))}
-          </div>
+      <div className="relative hidden w-[48%] flex-col justify-between border-r border-[var(--dev-border)] px-12 py-10 lg:flex">
+        <div className="mono flex items-center gap-1.5 text-[13px] font-semibold">
+          <span style={{ color: "var(--dev-accent)" }}>$</span>
+          <span style={{ color: "var(--dev-text)" }}>prompt</span>
+          <span style={{ color: "var(--dev-text-mute)" }}>/shield</span>
         </div>
 
-        <p className="text-xs text-background/30">MIT License · Open Source</p>
+        <div className="space-y-7">
+          <div
+            className="mono inline-flex items-center gap-2 rounded px-2.5 py-1 text-[11px] uppercase tracking-widest"
+            style={{
+              backgroundColor: "rgba(122,162,255,0.10)",
+              color: "var(--dev-accent-hi)",
+              border: "1px solid rgba(122,162,255,0.20)",
+            }}
+          >
+            <span style={{ color: "var(--dev-accent)" }}>●</span> v0.1.0 ·
+            public beta
+          </div>
+
+          <h1
+            className="text-4xl font-bold leading-tight tracking-tight md:text-5xl"
+            style={{ color: "var(--dev-text)" }}
+          >
+            Secure every LLM
+            <br />
+            request before it
+            <br />
+            leaves{" "}
+            <span style={{ color: "var(--dev-accent)" }}>
+              your infra.
+            </span>
+          </h1>
+
+          <p
+            className="max-w-md text-base leading-relaxed"
+            style={{ color: "var(--dev-text-dim)" }}
+          >
+            Drop-in security gateway for OpenAI, Anthropic, Gemini and others providers. Detects
+            PII, secrets, and prompt injection with zero code changes.
+          </p>
+
+          <ul className="space-y-2.5">
+            {features.map((f) => (
+              <li
+                key={f}
+                className="mono flex items-start gap-3 text-[12px]"
+                style={{ color: "var(--dev-text-dim)" }}
+              >
+                <span
+                  className="mt-[3px] shrink-0"
+                  style={{ color: "var(--dev-green)" }}
+                >
+                  ▸
+                </span>
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div
+          className="mono flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]"
+          style={{ color: "var(--dev-text-mute)" }}
+        >
+          <span>{"// MIT License"}</span>
+          <span style={{ color: "var(--dev-border-hi)" }}>·</span>
+          <span>open source</span>
+          <span style={{ color: "var(--dev-border-hi)" }}>·</span>
+          <span>self-hostable</span>
+        </div>
       </div>
 
       {/* Right — form panel */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 bg-background">
-        <div className="w-full max-w-sm space-y-8">
+      <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-10">
+        <div className="w-full max-w-sm space-y-7">
           {/* Mobile wordmark */}
-          <span className="block font-display text-base font-bold tracking-tight text-foreground lg:hidden">
-            PromptShield
-          </span>
+          <div className="mono flex items-center gap-1.5 text-[13px] font-semibold lg:hidden">
+            <span style={{ color: "var(--dev-accent)" }}>$</span>
+            <span style={{ color: "var(--dev-text)" }}>prompt</span>
+            <span style={{ color: "var(--dev-text-mute)" }}>/shield</span>
+          </div>
 
-          <div>
-            <h2 className="font-display text-2xl font-bold text-foreground">
+          <div className="space-y-1.5">
+            <p
+              className="mono text-[10px] uppercase tracking-widest"
+              style={{ color: "var(--dev-text-mute)" }}
+            >
+              {mode === "signin" ? "# auth/signin" : "# auth/signup"}
+            </p>
+            <h2
+              className="text-2xl font-bold tracking-tight"
+              style={{ color: "var(--dev-text)" }}
+            >
               {mode === "signin" ? "Welcome back" : "Create account"}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p
+              className="mono text-[12px]"
+              style={{ color: "var(--dev-text-dim)" }}
+            >
+              <span style={{ color: "var(--dev-accent)" }}>$</span>{" "}
               {mode === "signin"
-                ? "Sign in to your dashboard"
-                : "Start securing your LLM requests"}
+                ? "ps auth login"
+                : "ps auth register --new"}
             </p>
           </div>
 

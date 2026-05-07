@@ -13,9 +13,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout.settings'
-import { Route as LayoutProxyRouteImport } from './routes/_layout.proxy'
 import { Route as LayoutPolicyRouteImport } from './routes/_layout.policy'
 import { Route as LayoutKeysRouteImport } from './routes/_layout.keys'
+import { Route as LayoutGatewayRouteImport } from './routes/_layout.gateway'
 import { Route as LayoutEngineRouteImport } from './routes/_layout.engine'
 import { Route as LayoutDashboardRouteImport } from './routes/_layout.dashboard'
 import { Route as LayoutConfigRouteImport } from './routes/_layout.config'
@@ -40,11 +40,6 @@ const LayoutSettingsRoute = LayoutSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
-const LayoutProxyRoute = LayoutProxyRouteImport.update({
-  id: '/proxy',
-  path: '/proxy',
-  getParentRoute: () => LayoutRoute,
-} as any)
 const LayoutPolicyRoute = LayoutPolicyRouteImport.update({
   id: '/policy',
   path: '/policy',
@@ -53,6 +48,11 @@ const LayoutPolicyRoute = LayoutPolicyRouteImport.update({
 const LayoutKeysRoute = LayoutKeysRouteImport.update({
   id: '/keys',
   path: '/keys',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutGatewayRoute = LayoutGatewayRouteImport.update({
+  id: '/gateway',
+  path: '/gateway',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutEngineRoute = LayoutEngineRouteImport.update({
@@ -83,9 +83,9 @@ export interface FileRoutesByFullPath {
   '/config': typeof LayoutConfigRoute
   '/dashboard': typeof LayoutDashboardRoute
   '/engine': typeof LayoutEngineRoute
+  '/gateway': typeof LayoutGatewayRoute
   '/keys': typeof LayoutKeysRoute
   '/policy': typeof LayoutPolicyRoute
-  '/proxy': typeof LayoutProxyRoute
   '/settings': typeof LayoutSettingsRoute
 }
 export interface FileRoutesByTo {
@@ -95,9 +95,9 @@ export interface FileRoutesByTo {
   '/config': typeof LayoutConfigRoute
   '/dashboard': typeof LayoutDashboardRoute
   '/engine': typeof LayoutEngineRoute
+  '/gateway': typeof LayoutGatewayRoute
   '/keys': typeof LayoutKeysRoute
   '/policy': typeof LayoutPolicyRoute
-  '/proxy': typeof LayoutProxyRoute
   '/settings': typeof LayoutSettingsRoute
 }
 export interface FileRoutesById {
@@ -109,9 +109,9 @@ export interface FileRoutesById {
   '/_layout/config': typeof LayoutConfigRoute
   '/_layout/dashboard': typeof LayoutDashboardRoute
   '/_layout/engine': typeof LayoutEngineRoute
+  '/_layout/gateway': typeof LayoutGatewayRoute
   '/_layout/keys': typeof LayoutKeysRoute
   '/_layout/policy': typeof LayoutPolicyRoute
-  '/_layout/proxy': typeof LayoutProxyRoute
   '/_layout/settings': typeof LayoutSettingsRoute
 }
 export interface FileRouteTypes {
@@ -123,9 +123,9 @@ export interface FileRouteTypes {
     | '/config'
     | '/dashboard'
     | '/engine'
+    | '/gateway'
     | '/keys'
     | '/policy'
-    | '/proxy'
     | '/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -135,9 +135,9 @@ export interface FileRouteTypes {
     | '/config'
     | '/dashboard'
     | '/engine'
+    | '/gateway'
     | '/keys'
     | '/policy'
-    | '/proxy'
     | '/settings'
   id:
     | '__root__'
@@ -148,9 +148,9 @@ export interface FileRouteTypes {
     | '/_layout/config'
     | '/_layout/dashboard'
     | '/_layout/engine'
+    | '/_layout/gateway'
     | '/_layout/keys'
     | '/_layout/policy'
-    | '/_layout/proxy'
     | '/_layout/settings'
   fileRoutesById: FileRoutesById
 }
@@ -190,13 +190,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutSettingsRouteImport
       parentRoute: typeof LayoutRoute
     }
-    '/_layout/proxy': {
-      id: '/_layout/proxy'
-      path: '/proxy'
-      fullPath: '/proxy'
-      preLoaderRoute: typeof LayoutProxyRouteImport
-      parentRoute: typeof LayoutRoute
-    }
     '/_layout/policy': {
       id: '/_layout/policy'
       path: '/policy'
@@ -209,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/keys'
       fullPath: '/keys'
       preLoaderRoute: typeof LayoutKeysRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/gateway': {
+      id: '/_layout/gateway'
+      path: '/gateway'
+      fullPath: '/gateway'
+      preLoaderRoute: typeof LayoutGatewayRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/engine': {
@@ -247,9 +247,9 @@ interface LayoutRouteChildren {
   LayoutConfigRoute: typeof LayoutConfigRoute
   LayoutDashboardRoute: typeof LayoutDashboardRoute
   LayoutEngineRoute: typeof LayoutEngineRoute
+  LayoutGatewayRoute: typeof LayoutGatewayRoute
   LayoutKeysRoute: typeof LayoutKeysRoute
   LayoutPolicyRoute: typeof LayoutPolicyRoute
-  LayoutProxyRoute: typeof LayoutProxyRoute
   LayoutSettingsRoute: typeof LayoutSettingsRoute
 }
 
@@ -258,9 +258,9 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutConfigRoute: LayoutConfigRoute,
   LayoutDashboardRoute: LayoutDashboardRoute,
   LayoutEngineRoute: LayoutEngineRoute,
+  LayoutGatewayRoute: LayoutGatewayRoute,
   LayoutKeysRoute: LayoutKeysRoute,
   LayoutPolicyRoute: LayoutPolicyRoute,
-  LayoutProxyRoute: LayoutProxyRoute,
   LayoutSettingsRoute: LayoutSettingsRoute,
 }
 

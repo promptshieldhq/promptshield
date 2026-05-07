@@ -7,6 +7,12 @@ import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 
+const inputClass =
+  "mono w-full rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-3.5 py-2.5 text-[13px] text-[var(--dev-text)] placeholder:text-[var(--dev-text-mute)] transition-colors focus:outline-none focus-visible:border-[var(--dev-accent)] focus-visible:ring-1 focus-visible:ring-[var(--dev-accent)]/40";
+
+const labelClass =
+  "mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]";
+
 export default function SignInForm({
   onSwitchToSignUp,
 }: {
@@ -55,11 +61,8 @@ export default function SignInForm({
         >
           {(field) => (
             <div className="space-y-1.5">
-              <label
-                htmlFor={field.name}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                Email
+              <label htmlFor={field.name} className={labelClass}>
+                # email
               </label>
               <input
                 id={field.name}
@@ -70,10 +73,10 @@ export default function SignInForm({
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors"
+                className={inputClass}
               />
               {field.state.meta.errors[0] && (
-                <p className="text-xs text-destructive">
+                <p className="mono text-[11px] text-[var(--destructive)]">
                   {field.state.meta.errors[0]?.message}
                 </p>
               )}
@@ -89,11 +92,8 @@ export default function SignInForm({
         >
           {(field) => (
             <div className="space-y-1.5">
-              <label
-                htmlFor={field.name}
-                className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-              >
-                Password
+              <label htmlFor={field.name} className={labelClass}>
+                # password
               </label>
               <div className="relative">
                 <input
@@ -105,19 +105,19 @@ export default function SignInForm({
                   onBlur={field.handleBlur}
                   onChange={(e) => field.handleChange(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-lg border border-border bg-card px-4 py-3 pr-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary transition-colors"
+                  className={`${inputClass} pr-10`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--dev-text-mute)] transition-colors hover:text-[var(--dev-text)]"
                   aria-label={showPw ? "Hide password" : "Show password"}
                 >
-                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
               {field.state.meta.errors[0] && (
-                <p className="text-xs text-destructive">
+                <p className="mono text-[11px] text-[var(--destructive)]">
                   {field.state.meta.errors[0]?.message}
                 </p>
               )}
@@ -135,21 +135,29 @@ export default function SignInForm({
             <button
               type="submit"
               disabled={!canSubmit || isSubmitting}
-              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mono btn-press w-full rounded px-4 py-2.5 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                backgroundColor: "var(--dev-accent)",
+                color: "var(--dev-bg)",
+              }}
             >
-              {isSubmitting ? "Signing in…" : "Sign In"}
+              {isSubmitting ? "signing in…" : "sign in →"}
             </button>
           )}
         </form.Subscribe>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+      <p
+        className="mono text-center text-[12px]"
+        style={{ color: "var(--dev-text-dim)" }}
+      >
+        no account?{" "}
         <button
           onClick={onSwitchToSignUp}
-          className="font-medium text-primary hover:underline focus-visible:outline-none"
+          className="font-medium transition-colors hover:underline"
+          style={{ color: "var(--dev-accent-hi)" }}
         >
-          Sign up
+          register →
         </button>
       </p>
     </div>

@@ -1,14 +1,14 @@
 import { publicProcedure, router } from "../index";
 import { auditRouter } from "./audit";
 import { dashboardRouter } from "./dashboard";
+import { gatewayRouter } from "./gateway";
 import { keysRouter } from "./keys";
 import { policiesRouter } from "./policies";
-import { proxyRouter } from "./proxy";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => "OK"),
   dashboard: dashboardRouter,
-  proxy: proxyRouter,
+  gateway: gatewayRouter,
   keys: keysRouter,
   audit: auditRouter,
   policies: policiesRouter,

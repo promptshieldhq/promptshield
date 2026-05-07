@@ -18,7 +18,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "A free, open-source proxy for every LLM call. Rate limiting, audit logging, provider routing, and Prometheus metrics out of the box.",
+          "A free, open-source gateway for every LLM call. Rate limiting, audit logging, provider routing, and Prometheus metrics out of the box.",
       },
     ],
     links: [

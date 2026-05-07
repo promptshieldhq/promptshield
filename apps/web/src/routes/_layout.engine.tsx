@@ -68,14 +68,14 @@ function EnginePage() {
   const trpc = useTRPC();
 
   const engineHealth = useQuery(
-    trpc.proxy.engineHealth.queryOptions(undefined, {
+    trpc.gateway.engineHealth.queryOptions(undefined, {
       refetchInterval: 15_000,
     }),
   );
-  const engineConfig = useQuery(trpc.proxy.getEngineConfig.queryOptions());
+  const engineConfig = useQuery(trpc.gateway.getEngineConfig.queryOptions());
 
   const updateEngineConfig = useMutation(
-    trpc.proxy.updateEngineConfig.mutationOptions({
+    trpc.gateway.updateEngineConfig.mutationOptions({
       onSuccess: () => toast.success("Engine config updated"),
       onError: () => toast.error("Failed to update engine config"),
     }),
@@ -129,10 +129,15 @@ function EnginePage() {
   return (
     <div className="flex min-h-full flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur-sm">
-        <h1 className="text-sm font-semibold text-foreground">
-          Detection Engine
-        </h1>
+      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-[var(--dev-border)] bg-[var(--dev-bg)]/95 px-6 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+            ~/
+          </span>
+          <h1 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+            engine
+          </h1>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
@@ -141,7 +146,7 @@ function EnginePage() {
             }}
             disabled={engineHealth.isFetching}
             aria-label="Refresh"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+            className="flex h-8 w-8 items-center justify-center rounded border border-[var(--dev-border)] text-[var(--dev-text-dim)] transition-colors hover:bg-[var(--dev-panel)] hover:text-[var(--dev-text)] disabled:opacity-40"
           >
             <RefreshCw
               size={13}
@@ -155,17 +160,17 @@ function EnginePage() {
             <Sk className="h-6 w-16 rounded-full" />
           ) : (
             <span
-              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+              className={`mono flex items-center gap-1.5 rounded border px-2.5 py-1 text-[11px] font-semibold ${
                 online
-                  ? "border-success/25 bg-success/10 text-success"
-                  : "border-destructive/25 bg-destructive/10 text-destructive"
+                  ? "border-[var(--dev-green)]/25 bg-[var(--dev-green)]/10 text-[var(--dev-green)]"
+                  : "border-[var(--dev-red,#F07A7A)]/25 bg-[var(--dev-red,#F07A7A)]/10 text-[var(--dev-red,#F07A7A)]"
               }`}
             >
               <span
-                className={`h-1.5 w-1.5 rounded-full ${online ? "bg-success motion-safe:animate-pulse" : "bg-destructive"}`}
+                className={`h-1.5 w-1.5 rounded-full ${online ? "bg-[var(--dev-green)] motion-safe:animate-pulse" : "bg-[var(--dev-red,#F07A7A)]"}`}
                 aria-hidden="true"
               />
-              {online ? "Online" : "Offline"}
+              {online ? "online" : "offline"}
             </span>
           )}
         </div>

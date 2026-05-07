@@ -25,7 +25,7 @@ function resolvePolicyPathOrThrow(pathValue: string): string {
   return resolved;
 }
 
-type PolicySource = "local_file" | "proxy_api";
+type PolicySource = "local_file" | "gateway_api";
 
 function getPolicySource(): PolicySource {
   return env.POLICY_SOURCE;
@@ -40,14 +40,14 @@ function isLoopbackHost(host: string): boolean {
   return false;
 }
 
-function assertPolicyProxySecurity(): void {
-  const target = buildProxyPolicyUrl();
+function assertPolicyGatewaySecurity(): void {
+  const target = buildGatewayPolicyUrl();
   const parsed = new URL(target);
 
-  if (!env.PROXY_ADMIN_TOKEN) {
+  if (!env.GATEWAY_ADMIN_TOKEN) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "PROXY_ADMIN_TOKEN is required when POLICY_SOURCE=proxy_api",
+      message: "GATEWAY_ADMIN_TOKEN is required when POLICY_SOURCE=gateway_api",
     });
   }
 
@@ -57,19 +57,19 @@ function assertPolicyProxySecurity(): void {
   throw new TRPCError({
     code: "BAD_REQUEST",
     message:
-      "Proxy policy endpoint must use HTTPS unless targeting localhost/loopback",
+      "Gateway policy endpoint must use HTTPS unless targeting localhost/loopback",
   });
 }
 
-function buildProxyPolicyUrl(): string {
-  return new URL(env.PROXY_POLICY_ENDPOINT, `${env.PROXY_URL}/`).toString();
+function buildGatewayPolicyUrl(): string {
+  return new URL(env.GATEWAY_POLICY_ENDPOINT, `${env.GATEWAY_URL}/`).toString();
 }
 
-function proxyHeaders(contentType?: string): Record<string, string> {
+function gatewayHeaders(contentType?: string): Record<string, string> {
   return {
     ...(contentType ? { "Content-Type": contentType } : {}),
-    ...(env.PROXY_ADMIN_TOKEN
-      ? { Authorization: `Bearer ${env.PROXY_ADMIN_TOKEN}` }
+    ...(env.GATEWAY_ADMIN_TOKEN
+      ? { Authorization: `Bearer ${env.GATEWAY_ADMIN_TOKEN}` }
       : {}),
   };
 }
@@ -89,11 +89,11 @@ async function parsePolicyResponseText(res: Response): Promise<string | null> {
   return text || null;
 }
 
-function proxyRequestError(status: number, bodyText: string): TRPCError {
+function gatewayRequestError(status: number, bodyText: string): TRPCError {
   if (status === 401 || status === 403) {
     return new TRPCError({
       code: "FORBIDDEN",
-      message: "Proxy policy endpoint rejected credentials",
+      message: "Gateway policy endpoint rejected credentials",
     });
   }
 
@@ -101,49 +101,49 @@ function proxyRequestError(status: number, bodyText: string): TRPCError {
     return new TRPCError({
       code: "BAD_REQUEST",
       message:
-        "Proxy policy endpoint not found. Ensure promptshield-gateway exposes /admin/policy",
+        "Gateway policy endpoint not found. Ensure promptshield-gateway exposes /admin/policy",
     });
   }
 
   return new TRPCError({
     code: "BAD_REQUEST",
-    message: `Proxy policy request failed (${status})${bodyText ? `: ${bodyText.slice(0, 120)}` : ""}`,
+    message: `Gateway policy request failed (${status})${bodyText ? `: ${bodyText.slice(0, 120)}` : ""}`,
   });
 }
 
-async function readPolicyFromProxy(): Promise<string | null> {
-  assertPolicyProxySecurity();
-  const url = buildProxyPolicyUrl();
+async function readPolicyFromGateway(): Promise<string | null> {
+  assertPolicyGatewaySecurity();
+  const url = buildGatewayPolicyUrl();
 
   let res: Response;
   try {
     res = await fetch(url, {
       method: "GET",
-      headers: proxyHeaders(),
+      headers: gatewayHeaders(),
       signal: AbortSignal.timeout(4000),
     });
   } catch {
     throw new TRPCError({
       code: "SERVICE_UNAVAILABLE",
-      message: "Unable to reach proxy policy endpoint",
+      message: "Unable to reach gateway policy endpoint",
     });
   }
 
   if (!res.ok) {
     const bodyText = await res.text().catch(() => "");
-    throw proxyRequestError(res.status, bodyText);
+    throw gatewayRequestError(res.status, bodyText);
   }
 
   return parsePolicyResponseText(res);
 }
 
-async function writePolicyToProxy(content: string): Promise<void> {
-  assertPolicyProxySecurity();
-  const url = buildProxyPolicyUrl();
+async function writePolicyToGateway(content: string): Promise<void> {
+  assertPolicyGatewaySecurity();
+  const url = buildGatewayPolicyUrl();
 
   const jsonAttempt = await fetch(url, {
     method: "PUT",
-    headers: proxyHeaders("application/json"),
+    headers: gatewayHeaders("application/json"),
     body: JSON.stringify({ content }),
     signal: AbortSignal.timeout(5000),
   }).catch(() => null);
@@ -155,12 +155,12 @@ async function writePolicyToProxy(content: string): Promise<void> {
     ![400, 404, 415].includes(jsonAttempt.status)
   ) {
     const bodyText = await jsonAttempt.text().catch(() => "");
-    throw proxyRequestError(jsonAttempt.status, bodyText);
+    throw gatewayRequestError(jsonAttempt.status, bodyText);
   }
 
   const textAttempt = await fetch(url, {
     method: "PUT",
-    headers: proxyHeaders("text/plain"),
+    headers: gatewayHeaders("text/plain"),
     body: content,
     signal: AbortSignal.timeout(5000),
   }).catch(() => null);
@@ -170,25 +170,25 @@ async function writePolicyToProxy(content: string): Promise<void> {
   if (!textAttempt) {
     throw new TRPCError({
       code: "SERVICE_UNAVAILABLE",
-      message: "Unable to reach proxy policy endpoint",
+      message: "Unable to reach gateway policy endpoint",
     });
   }
 
   const bodyText = await textAttempt.text().catch(() => "");
-  throw proxyRequestError(textAttempt.status, bodyText);
+  throw gatewayRequestError(textAttempt.status, bodyText);
 }
 
 async function readCurrentPolicyContent(): Promise<string | null> {
-  if (getPolicySource() === "proxy_api") {
-    return readPolicyFromProxy();
+  if (getPolicySource() === "gateway_api") {
+    return readPolicyFromGateway();
   }
   const filePath = await getEffectivePolicyPath();
   return readFile(filePath, "utf-8").catch(() => null);
 }
 
 async function writeCurrentPolicyContent(content: string): Promise<void> {
-  if (getPolicySource() === "proxy_api") {
-    await writePolicyToProxy(content);
+  if (getPolicySource() === "gateway_api") {
+    await writePolicyToGateway(content);
     return;
   }
   const filePath = await getEffectivePolicyPath();
@@ -199,15 +199,15 @@ async function writeCurrentPolicyContent(content: string): Promise<void> {
 export const policiesRouter = router({
   sourceInfo: protectedProcedure.query(async () => {
     const source = getPolicySource();
-    if (source === "proxy_api") {
-      assertPolicyProxySecurity();
+    if (source === "gateway_api") {
+      assertPolicyGatewaySecurity();
     }
     return {
       source,
-      proxyUrl: env.PROXY_URL,
-      proxyPolicyEndpoint:
-        source === "proxy_api" ? buildProxyPolicyUrl() : null,
-      hasProxyAdminToken: Boolean(env.PROXY_ADMIN_TOKEN),
+      gatewayUrl: env.GATEWAY_URL,
+      gatewayPolicyEndpoint:
+        source === "gateway_api" ? buildGatewayPolicyUrl() : null,
+      hasGatewayAdminToken: Boolean(env.GATEWAY_ADMIN_TOKEN),
     };
   }),
 
@@ -336,10 +336,10 @@ export const policiesRouter = router({
   fileMeta: protectedProcedure.query(async () => {
     const source = getPolicySource();
 
-    if (source === "proxy_api") {
-      const path = buildProxyPolicyUrl();
+    if (source === "gateway_api") {
+      const path = buildGatewayPolicyUrl();
       try {
-        const content = await readPolicyFromProxy();
+        const content = await readPolicyFromGateway();
         return {
           source,
           path,
@@ -382,10 +382,10 @@ export const policiesRouter = router({
   checkFilePath: protectedProcedure
     .input(z.object({ path: z.string().min(1) }))
     .mutation(async ({ input }) => {
-      if (getPolicySource() === "proxy_api") {
+      if (getPolicySource() === "gateway_api") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Policy path editing is disabled when POLICY_SOURCE=proxy_api",
+          message: "Policy path editing is disabled when POLICY_SOURCE=gateway_api",
         });
       }
 
@@ -406,10 +406,10 @@ export const policiesRouter = router({
     .input(z.object({ path: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       requireConfigAdmin(ctx.session, env.CONFIG_ADMIN_EMAILS);
-      if (getPolicySource() === "proxy_api") {
+      if (getPolicySource() === "gateway_api") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Policy path editing is disabled when POLICY_SOURCE=proxy_api",
+          message: "Policy path editing is disabled when POLICY_SOURCE=gateway_api",
         });
       }
 
@@ -421,9 +421,9 @@ export const policiesRouter = router({
   getCurrentFile: protectedProcedure.query(async () => {
     const source = getPolicySource();
 
-    if (source === "proxy_api") {
-      const content = await readPolicyFromProxy();
-      return { content, source, target: buildProxyPolicyUrl() };
+    if (source === "gateway_api") {
+      const content = await readPolicyFromGateway();
+      return { content, source, target: buildGatewayPolicyUrl() };
     }
 
     const filePath = await getEffectivePolicyPath();

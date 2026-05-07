@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import { env } from "@promptshield/env/web";
 import {
   ArrowRight,
   CheckCircle2,
@@ -38,16 +40,16 @@ function relTime(date: Date | string) {
 
 /* ─── Stat tile ────────────────────────────────────────────────────── */
 const ACCENT_VALUE: Record<string, string> = {
-  danger: "text-destructive",
-  warning: "text-warning",
-  success: "text-success",
-  default: "text-foreground",
+  danger: "text-[var(--dev-red,#F07A7A)]",
+  warning: "text-[var(--dev-amber)]",
+  success: "text-[var(--dev-green)]",
+  default: "text-[var(--dev-text)]",
 };
 const ACCENT_BAR: Record<string, string> = {
-  danger: "bg-destructive",
-  warning: "bg-warning",
-  success: "bg-success",
-  default: "bg-primary",
+  danger: "bg-[var(--dev-red,#F07A7A)]",
+  warning: "bg-[var(--dev-amber)]",
+  success: "bg-[var(--dev-green)]",
+  default: "bg-[var(--dev-accent)]",
 };
 
 function Stat({
@@ -68,7 +70,7 @@ function Stat({
   barPct?: number;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-5 py-4">
+    <div className="rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-5 py-4">
       {loading ? (
         <div className="space-y-2.5">
           <Sk className="h-2 w-20" />
@@ -78,16 +80,16 @@ function Stat({
         </div>
       ) : (
         <>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {label}
+          <p className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+            # {label.toLowerCase()}
           </p>
           <p
-            className={`mt-2 text-[2rem] font-semibold leading-none tabular-nums tracking-tight ${ACCENT_VALUE[accent]}`}
+            className={`mono mt-2 text-[2rem] font-semibold leading-none tabular-nums tracking-tight ${ACCENT_VALUE[accent]}`}
           >
             {value ?? "—"}
           </p>
           {barPct !== undefined && (
-            <div className="mt-2.5 h-0.5 w-full overflow-hidden rounded-full bg-border/60">
+            <div className="mt-2.5 h-0.5 w-full overflow-hidden rounded-full bg-[var(--dev-border)]">
               <div
                 className={`h-full rounded-full transition-[width] duration-700 ease-out ${ACCENT_BAR[accent]}`}
                 style={{ width: `${Math.min(barPct, 100)}%` }}
@@ -98,9 +100,11 @@ function Stat({
           <div
             className={`flex items-baseline justify-between gap-2 ${barPct !== undefined ? "mt-1.5" : "mt-2"}`}
           >
-            {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+            {sub && (
+              <p className="text-[11px] text-[var(--dev-text-dim)]">{sub}</p>
+            )}
             {note && (
-              <p className="shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground/70">
+              <p className="mono shrink-0 text-[10px] tabular-nums text-[var(--dev-text-mute)]">
                 {note}
               </p>
             )}
@@ -125,33 +129,35 @@ function StatusPill({
 }) {
   if (loading) {
     return (
-      <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2">
+      <div className="flex items-center gap-2 rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-3 py-2">
         <Sk className="h-1.5 w-1.5 rounded-full" />
         <Sk className="h-2.5 w-24" />
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2">
+    <div className="flex items-center gap-2 rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-3 py-2">
       <span
         className={`h-1.5 w-1.5 shrink-0 rounded-full ${
           online == null
-            ? "bg-muted-foreground/30"
+            ? "bg-[var(--dev-text-mute)]/40"
             : online
-              ? "bg-success"
-              : "bg-destructive"
+              ? "bg-[var(--dev-green)]"
+              : "bg-[var(--dev-red,#F07A7A)]"
         }`}
         aria-hidden="true"
       />
-      <span className="text-xs font-medium text-foreground">{label}</span>
+      <span className="mono text-[12px] font-medium text-[var(--dev-text)]">
+        {label.toLowerCase()}
+      </span>
       {online == null ? (
-        <span className="text-[10px] text-muted-foreground">—</span>
+        <span className="mono text-[10px] text-[var(--dev-text-mute)]">—</span>
       ) : online ? (
-        <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+        <span className="mono text-[10px] tabular-nums text-[var(--dev-text-dim)]">
           {latencyMs != null ? `${latencyMs}ms` : "online"}
         </span>
       ) : (
-        <span className="text-[10px] font-medium text-destructive">
+        <span className="mono text-[10px] font-medium text-[var(--dev-red,#F07A7A)]">
           offline
         </span>
       )}
@@ -161,11 +167,11 @@ function StatusPill({
 
 /* Entity bar colors */
 const BAR_COLOR = [
-  "bg-destructive",
-  "bg-warning",
-  "bg-warning/60",
-  "bg-muted-foreground/35",
-  "bg-muted-foreground/20",
+  "bg-[var(--dev-red,#F07A7A)]",
+  "bg-[var(--dev-amber)]",
+  "bg-[var(--dev-amber)]/60",
+  "bg-[var(--dev-accent)]/40",
+  "bg-[var(--dev-text-mute)]/30",
 ] as const;
 
 /* Time range */
@@ -182,7 +188,23 @@ const RANGES: { value: Range; label: string; note: string; ms: number }[] = [
 /* Page */
 function DashboardPage() {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const [range, setRange] = useState<Range>("24h");
+
+  // Real-time push: subscribe to the audit stream, invalidate dashboard queries on each tick.
+  // EventSource auto-reconnects on drop. Falls back to polling intervals if the stream errors.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = `${env.VITE_SERVER_URL}/internal/audit/stream`;
+    const es = new EventSource(url, { withCredentials: true });
+    // Refresh whatever is currently mounted; react-query only refetches active subscriptions.
+    const onAudit = () => queryClient.invalidateQueries();
+    es.addEventListener("audit", onAudit);
+    return () => {
+      es.removeEventListener("audit", onAudit);
+      es.close();
+    };
+  }, [queryClient]);
 
   const rangeConfig = RANGES.find((r) => r.value === range)!;
   const dateFrom = useMemo(
@@ -209,8 +231,8 @@ function DashboardPage() {
       { refetchInterval: 60_000 },
     ),
   );
-  const proxyStatus = useQuery(
-    trpc.dashboard.proxyStatus.queryOptions(undefined, {
+  const gatewayStatus = useQuery(
+    trpc.dashboard.gatewayStatus.queryOptions(undefined, {
       refetchInterval: 30_000,
     }),
   );
@@ -230,7 +252,7 @@ function DashboardPage() {
   const threatRate =
     s && s.totalRequests > 0 ? parseFloat(String(s.threatRate)) : null;
   const isRefreshing =
-    stats.isFetching || recentBlocks.isFetching || proxyStatus.isFetching;
+    stats.isFetching || recentBlocks.isFetching || gatewayStatus.isFetching;
 
   const threatAccent =
     threatRate == null
@@ -246,19 +268,26 @@ function DashboardPage() {
   return (
     <div className="flex min-h-full flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur-sm">
-        <h1 className="text-sm font-semibold text-foreground">Overview</h1>
+      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-[var(--dev-border)] bg-[var(--dev-bg)]/95 px-6 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+            ~/
+          </span>
+          <h1 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+            dashboard
+          </h1>
+        </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-md border border-border bg-background p-0.5">
+          <div className="flex items-center rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] p-0.5">
             {RANGES.map((r) => (
               <button
                 key={r.value}
                 onClick={() => setRange(r.value)}
-                className={`rounded px-2.5 py-1 font-mono text-[11px] font-medium transition-colors ${
+                className={`mono rounded px-2.5 py-1 text-[11px] font-medium transition-colors ${
                   range === r.value
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-[rgba(122,162,255,0.10)] text-[var(--dev-text)] border border-[rgba(122,162,255,0.25)]"
+                    : "border border-transparent text-[var(--dev-text-mute)] hover:text-[var(--dev-text)]"
                 }`}
               >
                 {r.label}
@@ -270,12 +299,12 @@ function DashboardPage() {
               stats.refetch();
               recentBlocks.refetch();
               breakdown.refetch();
-              proxyStatus.refetch();
+              gatewayStatus.refetch();
               engineStatus.refetch();
             }}
             aria-label="Refresh dashboard"
             disabled={isRefreshing}
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-8 w-8 items-center justify-center rounded border border-[var(--dev-border)] text-[var(--dev-text-dim)] transition-colors hover:bg-[var(--dev-panel)] hover:text-[var(--dev-text)] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <RefreshCw
               size={13}
@@ -290,10 +319,10 @@ function DashboardPage() {
         {/* Service status */}
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill
-            label="Proxy"
-            online={proxyStatus.data?.online}
-            latencyMs={proxyStatus.data?.latencyMs}
-            loading={proxyStatus.isPending}
+            label="Gateway"
+            online={gatewayStatus.data?.online}
+            latencyMs={gatewayStatus.data?.latencyMs}
+            loading={gatewayStatus.isPending}
           />
           <StatusPill
             label="Engine"
@@ -301,13 +330,13 @@ function DashboardPage() {
             latencyMs={engineStatus.data?.latencyMs}
             loading={engineStatus.isPending}
           />
-          {proxyStatus.data?.online === false && (
+          {gatewayStatus.data?.online === false && (
             <span className="text-[11px] text-muted-foreground">
-              Proxy is offline
+              Gateway is offline
             </span>
           )}
           {engineStatus.data?.online === false &&
-            proxyStatus.data?.online !== false && (
+            gatewayStatus.data?.online !== false && (
               <span className="text-[11px] text-muted-foreground">
                 Engine is offline
               </span>
@@ -389,28 +418,29 @@ function DashboardPage() {
 
         {/* Empty state */}
         {isEmpty && (
-          <div className="rounded-lg border border-border bg-card px-6 py-8">
+          <div className="rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-6 py-8">
             <div className="mx-auto max-w-lg">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted/30">
+              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded border border-[var(--dev-border)] bg-[var(--dev-panel-hi)]">
                 <Terminal
                   size={18}
-                  className="text-muted-foreground/60"
+                  className="text-[var(--dev-accent)]"
                   aria-hidden="true"
                 />
               </div>
-              <h2 className="text-sm font-semibold text-foreground">
-                No requests proxied yet
+              <h2 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+                no requests proxied yet
               </h2>
-              <p className="mt-1 text-[13px] text-muted-foreground">
-                Point your application at the proxy instead of calling the LLM
+              <p className="mt-1 text-[13px] text-[var(--dev-text-dim)]">
+                Point your application at the gateway instead of calling the LLM
                 directly. Stats will appear here as traffic flows through.
               </p>
 
               <div className="mt-4 space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Quick test
+                <p className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+                  # quick-test
                 </p>
-                <pre className="overflow-x-auto rounded-md border border-border bg-muted/30 p-3 font-mono text-[11px] text-foreground leading-relaxed">
+                <pre className="mono overflow-x-auto rounded border border-[var(--dev-border)] bg-[var(--dev-panel-hi)] p-3 text-[11px] leading-relaxed text-[var(--dev-text)]">
+                  <span style={{ color: "var(--dev-accent)" }}>$</span>{" "}
                   {`curl http://localhost:8080/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -421,9 +451,9 @@ function DashboardPage() {
     }]
   }'`}
                 </pre>
-                <p className="text-[11px] text-muted-foreground">
-                  The proxy will detect{" "}
-                  <code className="rounded bg-muted/60 px-1 font-mono text-[10px]">
+                <p className="text-[11px] text-[var(--dev-text-dim)]">
+                  The gateway will detect{" "}
+                  <code className="mono rounded bg-[var(--dev-panel-hi)] border border-[var(--dev-border)] px-1 text-[10px] text-[var(--dev-accent-hi)]">
                     EMAIL_ADDRESS
                   </code>{" "}
                   and apply your policy action.
@@ -433,17 +463,17 @@ function DashboardPage() {
               <div className="mt-5 flex flex-wrap items-center gap-2">
                 <Link
                   to="/policy"
-                  className="flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                  className="mono flex items-center gap-1.5 rounded border border-[var(--dev-border)] bg-[var(--dev-bg)] px-3 py-2 text-[12px] text-[var(--dev-text)] transition-colors hover:bg-[var(--dev-panel-hi)]"
                 >
                   <ShieldOff size={12} aria-hidden="true" />
-                  Edit policy
+                  edit policy →
                 </Link>
                 <Link
                   to="/audit"
-                  className="flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                  className="mono flex items-center gap-1.5 rounded border border-[var(--dev-border)] bg-[var(--dev-bg)] px-3 py-2 text-[12px] text-[var(--dev-text)] transition-colors hover:bg-[var(--dev-panel-hi)]"
                 >
                   <Cpu size={12} aria-hidden="true" />
-                  Audit log
+                  audit log →
                 </Link>
               </div>
             </div>
@@ -455,30 +485,30 @@ function DashboardPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
             {/* Recent blocks — 3 cols */}
             <section
-              className="overflow-hidden rounded-lg border border-border bg-card lg:col-span-3"
+              className="overflow-hidden rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] lg:col-span-3"
               aria-label="Recent blocked requests"
             >
-              <div className="flex h-10 items-center justify-between border-b border-border px-4">
+              <div className="flex h-10 items-center justify-between border-b border-[var(--dev-border)] px-4">
                 <div className="flex items-center gap-2">
                   <ShieldOff
                     size={12}
-                    className="text-muted-foreground"
+                    className="text-[var(--dev-text-mute)]"
                     aria-hidden="true"
                   />
-                  <h2 className="text-xs font-semibold text-foreground">
-                    Recent Blocks
+                  <h2 className="mono text-[11px] uppercase tracking-widest text-[var(--dev-text-dim)]">
+                    # recent-blocks
                   </h2>
                   {blocks.length > 0 && (
-                    <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-destructive">
+                    <span className="mono rounded border border-[var(--dev-red,#F07A7A)]/30 bg-[var(--dev-red,#F07A7A)]/10 px-1.5 py-0.5 text-[9px] font-semibold text-[var(--dev-red,#F07A7A)]">
                       {blocks.length}
                     </span>
                   )}
                 </div>
                 <Link
                   to="/audit"
-                  className="flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                  className="mono flex items-center gap-1 text-[11px] text-[var(--dev-text-mute)] transition-colors hover:text-[var(--dev-text)]"
                 >
-                  Audit log <ArrowRight size={10} aria-hidden="true" />
+                  audit log <ArrowRight size={10} aria-hidden="true" />
                 </Link>
               </div>
 
@@ -497,17 +527,17 @@ function DashboardPage() {
 
               {!recentBlocks.isPending && blocks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-14 text-center">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-success/10">
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--dev-green)]/10">
                     <CheckCircle2
                       size={18}
-                      className="text-success"
+                      className="text-[var(--dev-green)]"
                       aria-hidden="true"
                     />
                   </div>
-                  <p className="text-sm font-medium text-foreground">
-                    No blocks in this window
+                  <p className="mono text-[13px] font-medium text-[var(--dev-text)]">
+                    no blocks in this window
                   </p>
-                  <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                  <p className="mt-1 max-w-xs text-[11px] text-[var(--dev-text-dim)]">
                     All calls forwarded clean. Try a wider time range or send a
                     test request with PII.
                   </p>
@@ -517,33 +547,33 @@ function DashboardPage() {
               {!recentBlocks.isPending && blocks.length > 0 && (
                 <table className="w-full" role="table">
                   <thead>
-                    <tr className="border-b border-border/60 bg-muted/10">
-                      {["Time", "Key", "Entities"].map((h) => (
+                    <tr className="border-b border-[var(--dev-border)] bg-[var(--dev-panel-hi)]/40">
+                      {["time", "key", "entities"].map((h) => (
                         <th
                           key={h}
-                          className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                          className="mono px-4 py-2.5 text-left text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]"
                         >
-                          {h}
+                          # {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/40">
+                  <tbody className="divide-y divide-[var(--dev-border)]/60">
                     {blocks.map((event) => (
                       <tr
                         key={event.id}
-                        className="group transition-colors duration-75 hover:bg-muted/10"
+                        className="group transition-colors duration-75 hover:bg-[var(--dev-panel-hi)]/40"
                       >
-                        <td className="whitespace-nowrap px-4 py-3 font-mono text-[11px] tabular-nums text-muted-foreground">
+                        <td className="mono whitespace-nowrap px-4 py-3 text-[11px] tabular-nums text-[var(--dev-text-mute)]">
                           {relTime(event.timestamp)}
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className="inline-flex max-w-[110px] truncate rounded bg-muted/40 px-2 py-0.5 font-mono text-[11px] text-foreground"
+                            className="mono inline-flex max-w-[110px] truncate rounded bg-[var(--dev-panel-hi)] border border-[var(--dev-border)] px-2 py-0.5 text-[11px] text-[var(--dev-text)]"
                             title={event.keyId ?? "anonymous"}
                           >
                             {event.keyId ?? (
-                              <span className="text-muted-foreground">
+                              <span className="text-[var(--dev-text-mute)]">
                                 anon
                               </span>
                             )}
@@ -555,13 +585,13 @@ function DashboardPage() {
                               <span
                                 key={e}
                                 title={e}
-                                className="rounded border border-destructive/20 bg-destructive/10 px-1.5 py-0.5 font-mono text-[10px] text-destructive"
+                                className="mono rounded border border-[var(--dev-red,#F07A7A)]/25 bg-[var(--dev-red,#F07A7A)]/10 px-1.5 py-0.5 text-[10px] text-[var(--dev-red,#F07A7A)]"
                               >
                                 {e}
                               </span>
                             ))}
                             {(event.entityTypes?.length ?? 0) > 2 && (
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="mono text-[10px] text-[var(--dev-text-mute)]">
                                 +{(event.entityTypes?.length ?? 0) - 2}
                               </span>
                             )}
@@ -576,21 +606,21 @@ function DashboardPage() {
 
             {/* Entity distribution — 2 cols */}
             <section
-              className="overflow-hidden rounded-lg border border-border bg-card lg:col-span-2"
+              className="overflow-hidden rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] lg:col-span-2"
               aria-label="Entity distribution"
             >
-              <div className="flex h-10 items-center justify-between border-b border-border px-4">
+              <div className="flex h-10 items-center justify-between border-b border-[var(--dev-border)] px-4">
                 <div className="flex items-center gap-2">
                   <Cpu
                     size={12}
-                    className="text-muted-foreground"
+                    className="text-[var(--dev-text-mute)]"
                     aria-hidden="true"
                   />
-                  <h2 className="text-xs font-semibold text-foreground">
-                    Entity Distribution
+                  <h2 className="mono text-[11px] uppercase tracking-widest text-[var(--dev-text-dim)]">
+                    # entities
                   </h2>
                 </div>
-                <span className="font-mono text-[10px] text-muted-foreground/70">
+                <span className="mono text-[10px] text-[var(--dev-text-mute)]">
                   {noteLabel}
                 </span>
               </div>
@@ -610,12 +640,12 @@ function DashboardPage() {
                   </div>
                 ) : entityData.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <p className="text-[11px] text-muted-foreground">
-                      No entity data in this range
+                    <p className="mono text-[11px] text-[var(--dev-text-mute)]">
+                      no entity data in this range
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-border/30">
+                  <div className="divide-y divide-[var(--dev-border)]/40">
                     {entityData.map((item, idx) => (
                       <div
                         key={item.entity}
@@ -623,18 +653,18 @@ function DashboardPage() {
                       >
                         <div className="mb-1 flex items-center justify-between gap-3">
                           <span
-                            className="min-w-0 flex-1 truncate font-mono text-[11px] text-foreground"
+                            className="mono min-w-0 flex-1 truncate text-[11px] text-[var(--dev-text)]"
                             title={item.entity}
                           >
                             {item.entity}
                           </span>
-                          <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                          <span className="mono shrink-0 text-[11px] tabular-nums text-[var(--dev-text-dim)]">
                             {item.count.toLocaleString()}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-border/40">
+                        <div className="h-1.5 w-full overflow-hidden rounded-sm bg-[var(--dev-border)]">
                           <div
-                            className={`h-full rounded-sm transition-[width] duration-700 ease-out motion-reduce:transition-none ${BAR_COLOR[idx] ?? "bg-muted-foreground/20"}`}
+                            className={`h-full rounded-sm transition-[width] duration-700 ease-out motion-reduce:transition-none ${BAR_COLOR[idx] ?? "bg-[var(--dev-text-mute)]/20"}`}
                             style={{
                               width: `${(item.count / maxEntityCount) * 100}%`,
                             }}

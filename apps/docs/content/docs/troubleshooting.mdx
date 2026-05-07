@@ -3,7 +3,7 @@ title: Troubleshooting
 description: Common issues and how to fix them.
 ---
 
-## Proxy won't start
+## Gateway won't start
 
 **Symptom:** `make run` exits immediately or fails.
 
@@ -28,13 +28,13 @@ Check the engine is running:
 curl -s http://localhost:4321/health
 ```
 
-Check `PROMPTSHIELD_ENGINE_URL` is set in the proxy `.env`:
+Check `PROMPTSHIELD_ENGINE_URL` is set in the gateway `.env`:
 
 ```bash
 PROMPTSHIELD_ENGINE_URL=http://localhost:4321
 ```
 
-Restart the proxy after changing `.env`.
+Restart the gateway after changing `.env`.
 
 ---
 
@@ -65,7 +65,7 @@ Restart the proxy after changing `.env`.
 
 - Rate limiting requires `rate_limit` to be configured in `config/policy.yaml`
 - Confirm `key_by` is set correctly (`ip` or `api_key`)
-- Restart the proxy after changing the policy file
+- Restart the gateway after changing the policy file
 
 ---
 

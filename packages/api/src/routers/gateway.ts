@@ -8,14 +8,14 @@ import { env } from "@promptshield/env/server";
 import { protectedProcedure, router } from "../index";
 import { requireConfigAdmin } from "../admin-auth";
 import {
-  getEffectiveProxyUrl,
+  getEffectiveGatewayUrl,
   getEffectiveEngineUrl,
   writeRuntimeConfig,
   readRuntimeConfig,
   deleteRuntimeConfigKey,
 } from "../runtime-config";
 
-/* ─── .env file helpers ─────────────────────────────────────────────── */
+/* .env file helpers */
 
 const providerEnum = z.enum([
   "gemini",
@@ -25,7 +25,7 @@ const providerEnum = z.enum([
   "openai-compatible",
 ]);
 
-const proxyConfigInputSchema = z.object({
+const gatewayConfigInputSchema = z.object({
   mode: z.enum(["gateway", "security"]),
   engineUrl: z.string(),
   providerMode: z.enum(["single", "multi"]),
@@ -58,9 +58,9 @@ const proxyConfigInputSchema = z.object({
   policyPath: z.string().optional(),
 });
 
-type ProxyConfigSource = "local_env" | "proxy_api";
+type GatewayConfigSource = "local_env" | "gateway_api";
 
-const remoteProxyConfigSchema = z.object({
+const remoteGatewayConfigSchema = z.object({
   mode: z.enum(["gateway", "security"]).default("security"),
   engineUrl: z.string().default(""),
   provider: z.string().default("gemini"),
@@ -104,8 +104,8 @@ const remoteProxyConfigSchema = z.object({
   policyPath: z.string().default("config/policy.yaml"),
 });
 
-function getProxyConfigSource(): ProxyConfigSource {
-  return env.PROXY_CONFIG_SOURCE;
+function getGatewayConfigSource(): GatewayConfigSource {
+  return env.GATEWAY_CONFIG_SOURCE;
 }
 
 function isLoopbackHost(host: string): boolean {
@@ -117,15 +117,15 @@ function isLoopbackHost(host: string): boolean {
   return false;
 }
 
-function assertProxyApiSecurity(): void {
-  const target = buildProxyConfigUrl();
+function assertGatewayApiSecurity(): void {
+  const target = buildGatewayConfigUrl();
   const parsed = new URL(target);
 
-  if (!env.PROXY_ADMIN_TOKEN) {
+  if (!env.GATEWAY_ADMIN_TOKEN) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message:
-        "PROXY_ADMIN_TOKEN is required when PROXY_CONFIG_SOURCE=proxy_api",
+        "GATEWAY_ADMIN_TOKEN is required when GATEWAY_CONFIG_SOURCE=gateway_api",
     });
   }
 
@@ -135,28 +135,28 @@ function assertProxyApiSecurity(): void {
   throw new TRPCError({
     code: "BAD_REQUEST",
     message:
-      "Proxy config endpoint must use HTTPS unless targeting localhost/loopback",
+      "Gateway config endpoint must use HTTPS unless targeting localhost/loopback",
   });
 }
 
-function buildProxyConfigUrl(): string {
-  return new URL(env.PROXY_CONFIG_ENDPOINT, `${env.PROXY_URL}/`).toString();
+function buildGatewayConfigUrl(): string {
+  return new URL(env.GATEWAY_CONFIG_ENDPOINT, `${env.GATEWAY_URL}/`).toString();
 }
 
-function proxyAdminHeaders(contentType?: string): Record<string, string> {
+function gatewayAdminHeaders(contentType?: string): Record<string, string> {
   return {
     ...(contentType ? { "Content-Type": contentType } : {}),
-    ...(env.PROXY_ADMIN_TOKEN
-      ? { Authorization: `Bearer ${env.PROXY_ADMIN_TOKEN}` }
+    ...(env.GATEWAY_ADMIN_TOKEN
+      ? { Authorization: `Bearer ${env.GATEWAY_ADMIN_TOKEN}` }
       : {}),
   };
 }
 
-function proxyConfigError(status: number, bodyText: string): TRPCError {
+function gatewayConfigError(status: number, bodyText: string): TRPCError {
   if (status === 401 || status === 403) {
     return new TRPCError({
       code: "FORBIDDEN",
-      message: "Proxy config endpoint rejected credentials",
+      message: "Gateway config endpoint rejected credentials",
     });
   }
 
@@ -164,57 +164,57 @@ function proxyConfigError(status: number, bodyText: string): TRPCError {
     return new TRPCError({
       code: "BAD_REQUEST",
       message:
-        "Proxy config endpoint not found. Ensure promptshield-gateway exposes /admin/config",
+        "Gateway config endpoint not found. Ensure promptshield-gateway exposes /admin/config",
     });
   }
 
   return new TRPCError({
     code: "BAD_REQUEST",
-    message: `Proxy config request failed (${status})${bodyText ? `: ${bodyText.slice(0, 120)}` : ""}`,
+    message: `Gateway config request failed (${status})${bodyText ? `: ${bodyText.slice(0, 120)}` : ""}`,
   });
 }
 
-async function fetchProxyConfig(): Promise<Record<string, unknown>> {
-  assertProxyApiSecurity();
-  const url = buildProxyConfigUrl();
+async function fetchGatewayConfig(): Promise<Record<string, unknown>> {
+  assertGatewayApiSecurity();
+  const url = buildGatewayConfigUrl();
 
   let res: Response;
   try {
     res = await fetch(url, {
       method: "GET",
-      headers: proxyAdminHeaders(),
+      headers: gatewayAdminHeaders(),
       signal: AbortSignal.timeout(4000),
     });
   } catch {
     throw new TRPCError({
       code: "SERVICE_UNAVAILABLE",
-      message: "Unable to reach proxy config endpoint",
+      message: "Unable to reach gateway config endpoint",
     });
   }
 
   if (!res.ok) {
     const bodyText = await res.text().catch(() => "");
-    throw proxyConfigError(res.status, bodyText);
+    throw gatewayConfigError(res.status, bodyText);
   }
 
   const data = (await res.json().catch(() => null)) as unknown;
-  const parsed = remoteProxyConfigSchema.safeParse(data);
+  const parsed = remoteGatewayConfigSchema.safeParse(data);
   if (!parsed.success) {
     throw new TRPCError({
       code: "BAD_GATEWAY",
-      message: "Proxy config endpoint returned invalid payload",
+      message: "Gateway config endpoint returned invalid payload",
     });
   }
   return parsed.data;
 }
 
-async function updateProxyConfigViaApi(input: z.infer<typeof proxyConfigInputSchema>) {
-  assertProxyApiSecurity();
-  const url = buildProxyConfigUrl();
+async function updateGatewayConfigViaApi(input: z.infer<typeof gatewayConfigInputSchema>) {
+  assertGatewayApiSecurity();
+  const url = buildGatewayConfigUrl();
 
   const putRes = await fetch(url, {
     method: "PUT",
-    headers: proxyAdminHeaders("application/json"),
+    headers: gatewayAdminHeaders("application/json"),
     body: JSON.stringify(input),
     signal: AbortSignal.timeout(5000),
   }).catch(() => null);
@@ -223,12 +223,12 @@ async function updateProxyConfigViaApi(input: z.infer<typeof proxyConfigInputSch
 
   if (putRes && ![400, 404, 405].includes(putRes.status)) {
     const bodyText = await putRes.text().catch(() => "");
-    throw proxyConfigError(putRes.status, bodyText);
+    throw gatewayConfigError(putRes.status, bodyText);
   }
 
   const postRes = await fetch(url, {
     method: "POST",
-    headers: proxyAdminHeaders("application/json"),
+    headers: gatewayAdminHeaders("application/json"),
     body: JSON.stringify(input),
     signal: AbortSignal.timeout(5000),
   }).catch(() => null);
@@ -238,12 +238,12 @@ async function updateProxyConfigViaApi(input: z.infer<typeof proxyConfigInputSch
   if (!postRes) {
     throw new TRPCError({
       code: "SERVICE_UNAVAILABLE",
-      message: "Unable to reach proxy config endpoint",
+      message: "Unable to reach gateway config endpoint",
     });
   }
 
   const bodyText = await postRes.text().catch(() => "");
-  throw proxyConfigError(postRes.status, bodyText);
+  throw gatewayConfigError(postRes.status, bodyText);
 }
 
 function hasUnsafeEnvChars(value: string): boolean {
@@ -408,23 +408,23 @@ function splitKeys(val: string | undefined): string[] {
 
 /* Router */
 
-export const proxyRouter = router({
+export const gatewayRouter = router({
   configSourceInfo: protectedProcedure.query(async () => {
-    const source = getProxyConfigSource();
-    if (source === "proxy_api") {
-      assertProxyApiSecurity();
+    const source = getGatewayConfigSource();
+    if (source === "gateway_api") {
+      assertGatewayApiSecurity();
     }
     return {
       source,
-      proxyUrl: env.PROXY_URL,
-      proxyConfigEndpoint:
-        source === "proxy_api" ? buildProxyConfigUrl() : null,
-      hasProxyAdminToken: Boolean(env.PROXY_ADMIN_TOKEN),
+      gatewayUrl: env.GATEWAY_URL,
+      gatewayConfigEndpoint:
+        source === "gateway_api" ? buildGatewayConfigUrl() : null,
+      hasGatewayAdminToken: Boolean(env.GATEWAY_ADMIN_TOKEN),
     };
   }),
 
   health: protectedProcedure.query(async () => {
-    const url = await getEffectiveProxyUrl();
+    const url = await getEffectiveGatewayUrl();
     const start = Date.now();
     try {
       const res = await fetch(`${url}/health`, {
@@ -460,19 +460,19 @@ export const proxyRouter = router({
   getUrls: protectedProcedure.query(async () => {
     const cfg = await readRuntimeConfig();
     return {
-      proxyUrl: cfg.proxyUrl ?? env.PROXY_URL,
+      gatewayUrl: cfg.gatewayUrl ?? env.GATEWAY_URL,
       engineUrl: cfg.engineUrl ?? env.ENGINE_URL,
-      proxyDefault: env.PROXY_URL,
+      gatewayDefault: env.GATEWAY_URL,
       engineDefault: env.ENGINE_URL,
     };
   }),
 
-  saveProxyUrl: protectedProcedure
+  saveGatewayUrl: protectedProcedure
     .input(z.object({ url: z.string().url("Must be a valid URL") }))
     .mutation(async ({ ctx, input }) => {
       requireConfigAdmin(ctx.session, env.CONFIG_ADMIN_EMAILS);
-      const safeUrl = await validateSafeHttpUrl(input.url, "Proxy URL");
-      await writeRuntimeConfig({ proxyUrl: safeUrl });
+      const safeUrl = await validateSafeHttpUrl(input.url, "Gateway URL");
+      await writeRuntimeConfig({ gatewayUrl: safeUrl });
       return { saved: true, url: safeUrl };
     }),
 
@@ -485,10 +485,10 @@ export const proxyRouter = router({
       return { saved: true, url: safeUrl };
     }),
 
-  resetProxyUrl: protectedProcedure.mutation(async ({ ctx }) => {
+  resetGatewayUrl: protectedProcedure.mutation(async ({ ctx }) => {
     requireConfigAdmin(ctx.session, env.CONFIG_ADMIN_EMAILS);
-    await deleteRuntimeConfigKey("proxyUrl");
-    return { reset: true, url: env.PROXY_URL };
+    await deleteRuntimeConfigKey("gatewayUrl");
+    return { reset: true, url: env.GATEWAY_URL };
   }),
 
   resetEngineUrl: protectedProcedure.mutation(async ({ ctx }) => {
@@ -520,8 +520,8 @@ export const proxyRouter = router({
     }),
 
   getConfig: protectedProcedure.query(async () => {
-    if (getProxyConfigSource() === "proxy_api") {
-      const remote = await fetchProxyConfig();
+    if (getGatewayConfigSource() === "gateway_api") {
+      const remote = await fetchGatewayConfig();
       return {
         mode:
           remote.mode === "gateway" || remote.mode === "security"
@@ -581,7 +581,7 @@ export const proxyRouter = router({
       };
     }
 
-    const content = await readFile(env.PROXY_ENV_PATH, "utf-8").catch(() => "");
+    const content = await readFile(env.GATEWAY_ENV_PATH, "utf-8").catch(() => "");
     const e = parseEnvFile(content);
 
     const engineUrl = e.PROMPTSHIELD_ENGINE_URL ?? "none";
@@ -632,15 +632,15 @@ export const proxyRouter = router({
   }),
 
   updateConfig: protectedProcedure
-    .input(proxyConfigInputSchema)
+    .input(gatewayConfigInputSchema)
     .mutation(async ({ ctx, input }) => {
       requireConfigAdmin(ctx.session, env.CONFIG_ADMIN_EMAILS);
-      if (getProxyConfigSource() === "proxy_api") {
-        await updateProxyConfigViaApi(input);
+      if (getGatewayConfigSource() === "gateway_api") {
+        await updateGatewayConfigViaApi(input);
         return { success: true };
       }
 
-      const content = await readFile(env.PROXY_ENV_PATH, "utf-8").catch(
+      const content = await readFile(env.GATEWAY_ENV_PATH, "utf-8").catch(
         () => "",
       );
 
@@ -723,7 +723,7 @@ export const proxyRouter = router({
       }
 
       const updated = updateEnvFile(content, updates);
-      await writeFile(env.PROXY_ENV_PATH, updated, "utf-8");
+      await writeFile(env.GATEWAY_ENV_PATH, updated, "utf-8");
       return { success: true };
     }),
 
@@ -736,11 +736,11 @@ export const proxyRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requireConfigAdmin(ctx.session, env.CONFIG_ADMIN_EMAILS);
-      if (getProxyConfigSource() === "proxy_api") {
+      if (getGatewayConfigSource() === "gateway_api") {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "API key editing is disabled in proxy_api mode. Manage keys via promptshield-gateway admin endpoint.",
+            "API key editing is disabled in gateway_api mode. Manage keys via promptshield-gateway admin endpoint.",
         });
       }
 
@@ -752,7 +752,7 @@ export const proxyRouter = router({
       }
       assertSafeEnvValue("API key", input.key);
 
-      const content = await readFile(env.PROXY_ENV_PATH, "utf-8").catch(
+      const content = await readFile(env.GATEWAY_ENV_PATH, "utf-8").catch(
         () => "",
       );
       const parsed = parseEnvFile(content);
@@ -769,7 +769,7 @@ export const proxyRouter = router({
       const next = [...existing, input.key].join(",");
       assertSafeEnvValue(k, next);
       const updated = updateEnvFile(content, { [k]: next });
-      await writeFile(env.PROXY_ENV_PATH, updated, "utf-8");
+      await writeFile(env.GATEWAY_ENV_PATH, updated, "utf-8");
       return { count: existing.length + 1 };
     }),
 
@@ -781,15 +781,15 @@ export const proxyRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requireConfigAdmin(ctx.session, env.CONFIG_ADMIN_EMAILS);
-      if (getProxyConfigSource() === "proxy_api") {
+      if (getGatewayConfigSource() === "gateway_api") {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
-            "API key editing is disabled in proxy_api mode. Manage keys via promptshield-gateway admin endpoint.",
+            "API key editing is disabled in gateway_api mode. Manage keys via promptshield-gateway admin endpoint.",
         });
       }
 
-      const content = await readFile(env.PROXY_ENV_PATH, "utf-8").catch(
+      const content = await readFile(env.GATEWAY_ENV_PATH, "utf-8").catch(
         () => "",
       );
       const envKey: Record<string, string> = {
@@ -799,7 +799,7 @@ export const proxyRouter = router({
         anthropic: "ANTHROPIC_API_KEY",
       };
       const updated = updateEnvFile(content, { [envKey[input.provider]!]: "" });
-      await writeFile(env.PROXY_ENV_PATH, updated, "utf-8");
+      await writeFile(env.GATEWAY_ENV_PATH, updated, "utf-8");
       return { success: true };
     }),
 

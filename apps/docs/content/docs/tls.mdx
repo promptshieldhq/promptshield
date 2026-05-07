@@ -30,7 +30,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 The included `infra/nginx/nginx.conf` sets `proxy_buffering off`, which is required for SSE streaming to work.
 
-## Option 3: Native TLS on the proxy
+## Option 3: Native TLS on the gateway
 
 No reverse proxy at all. Works well for Kubernetes with cert-manager or internal deployments.
 
@@ -39,7 +39,7 @@ PROMPTSHIELD_TLS_CERT=/etc/letsencrypt/live/your.domain.com/fullchain.pem
 PROMPTSHIELD_TLS_KEY=/etc/letsencrypt/live/your.domain.com/privkey.pem
 ```
 
-When both are set, the proxy calls `ListenAndServeTLS` at startup. When unset, it runs plaintext on `PROMPTSHIELD_PORT`.
+When both are set, the gateway calls `ListenAndServeTLS` at startup. When unset, it runs plaintext on `PROMPTSHIELD_PORT`.
 
 ## Self-signed (development only)
 

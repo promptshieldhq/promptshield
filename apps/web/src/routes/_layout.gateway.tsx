@@ -18,8 +18,8 @@ import { toast } from "sonner";
 
 import { useTRPC } from "@/utils/trpc";
 
-export const Route = createFileRoute("/_layout/proxy")({
-  component: ProxyPage,
+export const Route = createFileRoute("/_layout/gateway")({
+  component: GatewayPage,
 });
 
 /* Types */
@@ -281,7 +281,7 @@ function KeyRow({
             </button>
           </div>
           <p className="mt-1.5 text-[10px] text-muted-foreground/40">
-            Key is stored in the proxy .env file. Multiple keys rotate in
+            Key is stored in the gateway .env file. Multiple keys rotate in
             round-robin.
           </p>
         </div>
@@ -291,33 +291,33 @@ function KeyRow({
 }
 
 /* Page */
-function ProxyPage() {
+function GatewayPage() {
   const trpc = useTRPC();
 
-  const proxyHealth = useQuery(
-    trpc.proxy.health.queryOptions(undefined, { refetchInterval: 20_000 }),
+  const gatewayHealth = useQuery(
+    trpc.gateway.health.queryOptions(undefined, { refetchInterval: 20_000 }),
   );
   const engineHealth = useQuery(
-    trpc.proxy.engineHealth.queryOptions(undefined, {
+    trpc.gateway.engineHealth.queryOptions(undefined, {
       refetchInterval: 20_000,
     }),
   );
-  const proxyConfig = useQuery(trpc.proxy.getConfig.queryOptions());
-  const configSourceInfo = useQuery(trpc.proxy.configSourceInfo.queryOptions());
+  const gatewayConfig = useQuery(trpc.gateway.getConfig.queryOptions());
+  const configSourceInfo = useQuery(trpc.gateway.configSourceInfo.queryOptions());
 
   const updateConfig = useMutation(
-    trpc.proxy.updateConfig.mutationOptions({
-      onSuccess: () => toast.success("Config saved — restart proxy to apply"),
+    trpc.gateway.updateConfig.mutationOptions({
+      onSuccess: () => toast.success("Config saved — restart gateway to apply"),
       onError: (error) =>
         toast.error(getErrorMessage(error, "Failed to save config")),
     }),
   );
 
   const addKey = useMutation(
-    trpc.proxy.addApiKey.mutationOptions({
+    trpc.gateway.addApiKey.mutationOptions({
       onSuccess: (data) => {
         toast.success(`Key added (${data.count} total)`);
-        proxyConfig.refetch();
+        gatewayConfig.refetch();
       },
       onError: (error) =>
         toast.error(getErrorMessage(error, "Failed to add key")),
@@ -325,10 +325,10 @@ function ProxyPage() {
   );
 
   const clearKeys = useMutation(
-    trpc.proxy.clearApiKeys.mutationOptions({
+    trpc.gateway.clearApiKeys.mutationOptions({
       onSuccess: () => {
         toast.success("Keys cleared");
-        proxyConfig.refetch();
+        gatewayConfig.refetch();
       },
       onError: (error) =>
         toast.error(getErrorMessage(error, "Failed to clear keys")),
@@ -356,7 +356,7 @@ function ProxyPage() {
 
   // Populate form when config loads
   useEffect(() => {
-    const d = proxyConfig.data;
+    const d = gatewayConfig.data;
     if (!d) return;
     setMode(d.mode as "gateway" | "security");
     setEngineUrl(d.engineUrl);
@@ -371,7 +371,7 @@ function ProxyPage() {
     setChatRoute(d.chatRoute);
     setPolicyPath(d.policyPath);
     setIsDirty(false);
-  }, [proxyConfig.data]);
+  }, [gatewayConfig.data]);
 
   function markDirty() {
     setIsDirty(true);
@@ -413,14 +413,14 @@ function ProxyPage() {
     setIsDirty(false);
   }
 
-  const proxyOnline = proxyHealth.data?.online ?? false;
+  const gatewayOnline = gatewayHealth.data?.online ?? false;
   const engineOnline = engineHealth.data?.online ?? false;
   const isRefreshing =
-    proxyHealth.isFetching || engineHealth.isFetching || proxyConfig.isFetching;
-  const loading = proxyConfig.status === "pending";
-  const isProxyApiConfig = configSourceInfo.data?.source === "proxy_api";
+    gatewayHealth.isFetching || engineHealth.isFetching || gatewayConfig.isFetching;
+  const loading = gatewayConfig.status === "pending";
+  const isGatewayApiConfig = configSourceInfo.data?.source === "gateway_api";
 
-  const keyCounts = proxyConfig.data?.keyCounts ?? {
+  const keyCounts = gatewayConfig.data?.keyCounts ?? {
     upstream: 0,
     gemini: 0,
     openai: 0,
@@ -438,59 +438,64 @@ function ProxyPage() {
   return (
     <div className="flex min-h-full flex-col">
       {/* ─── Header ──────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur-sm">
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-sm font-semibold text-foreground">Proxy</h1>
+      <header className="sticky top-0 z-10 flex h-[52px] items-center justify-between border-b border-[var(--dev-border)] bg-[var(--dev-bg)]/95 px-6 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+            ~/
+          </span>
+          <h1 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+            gateway
+          </h1>
           {!configSourceInfo.isPending && (
-            <span className="inline-flex items-center gap-1 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            <span className="mono inline-flex items-center gap-1 rounded border border-[var(--dev-border)] bg-[var(--dev-panel)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--dev-text-dim)]">
               <Server size={10} aria-hidden="true" />
-              {isProxyApiConfig ? "Proxy API" : "Local Env"}
+              {isGatewayApiConfig ? "gateway api" : "local env"}
             </span>
           )}
           {/* Live status pills */}
           <div
-            className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-              proxyOnline
-                ? "border-success/25 bg-success/10 text-success"
-                : "border-destructive/25 bg-destructive/10 text-destructive"
+            className={`mono flex items-center gap-1.5 rounded border px-2 py-0.5 text-[10px] font-semibold ${
+              gatewayOnline
+                ? "border-[var(--dev-green)]/25 bg-[var(--dev-green)]/10 text-[var(--dev-green)]"
+                : "border-[var(--dev-red,#F07A7A)]/25 bg-[var(--dev-red,#F07A7A)]/10 text-[var(--dev-red,#F07A7A)]"
             }`}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full ${proxyOnline ? "bg-success motion-safe:animate-pulse" : "bg-destructive"}`}
+              className={`h-1.5 w-1.5 rounded-full ${gatewayOnline ? "bg-[var(--dev-green)] motion-safe:animate-pulse" : "bg-[var(--dev-red,#F07A7A)]"}`}
               aria-hidden="true"
             />
-            Proxy
+            gateway
           </div>
           <div
-            className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+            className={`mono flex items-center gap-1.5 rounded border px-2 py-0.5 text-[10px] font-semibold ${
               engineOnline
-                ? "border-success/25 bg-success/10 text-success"
-                : "border-muted/40 bg-muted/20 text-muted-foreground/50"
+                ? "border-[var(--dev-green)]/25 bg-[var(--dev-green)]/10 text-[var(--dev-green)]"
+                : "border-[var(--dev-border)] bg-[var(--dev-panel)] text-[var(--dev-text-mute)]"
             }`}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full ${engineOnline ? "bg-success motion-safe:animate-pulse" : "bg-muted-foreground/30"}`}
+              className={`h-1.5 w-1.5 rounded-full ${engineOnline ? "bg-[var(--dev-green)] motion-safe:animate-pulse" : "bg-[var(--dev-text-mute)]/40"}`}
               aria-hidden="true"
             />
-            Engine
+            engine
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {isDirty && (
-            <span className="rounded border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">
-              Unsaved changes
+            <span className="mono rounded border border-[var(--dev-amber)]/30 bg-[var(--dev-amber)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--dev-amber)]">
+              unsaved
             </span>
           )}
           <button
             onClick={() => {
-              proxyHealth.refetch();
+              gatewayHealth.refetch();
               engineHealth.refetch();
-              proxyConfig.refetch();
+              gatewayConfig.refetch();
             }}
             disabled={isRefreshing}
             aria-label="Refresh"
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+            className="flex h-8 w-8 items-center justify-center rounded border border-[var(--dev-border)] text-[var(--dev-text-dim)] transition-colors hover:bg-[var(--dev-panel)] hover:text-[var(--dev-text)] disabled:opacity-40"
           >
             <RefreshCw
               size={13}
@@ -501,22 +506,26 @@ function ProxyPage() {
           <button
             onClick={handleSave}
             disabled={updateConfig.isPending || !isDirty}
-            className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="mono btn-press flex items-center gap-1.5 rounded px-4 py-1.5 text-[12px] font-semibold transition-colors disabled:opacity-50"
+            style={{
+              backgroundColor: "var(--dev-accent)",
+              color: "var(--dev-bg)",
+            }}
           >
-            {updateConfig.isPending ? "Saving…" : "Save Config"}
+            {updateConfig.isPending ? "saving…" : "save config →"}
           </button>
         </div>
       </header>
 
       <div className="mx-auto w-full max-w-3xl space-y-4 p-6">
-        {isProxyApiConfig && (
+        {isGatewayApiConfig && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
             <p className="text-[11px] text-primary/90">
-              Provider/model settings are managed via external proxy config endpoint.
+              Provider/model settings are managed via external gateway config endpoint.
             </p>
-            {configSourceInfo.data?.proxyConfigEndpoint && (
+            {configSourceInfo.data?.gatewayConfigEndpoint && (
               <p className="mt-1 font-mono text-[10px] text-muted-foreground/60 break-all">
-                {configSourceInfo.data.proxyConfigEndpoint}
+                {configSourceInfo.data.gatewayConfigEndpoint}
               </p>
             )}
           </div>
@@ -621,11 +630,11 @@ function ProxyPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[
             {
-              label: "Proxy",
-              online: proxyOnline,
-              url: proxyHealth.data?.url ?? "http://localhost:8080",
-              latency: proxyHealth.data?.latencyMs,
-              loading: proxyHealth.isPending,
+              label: "Gateway",
+              online: gatewayOnline,
+              url: gatewayHealth.data?.url ?? "http://localhost:8080",
+              latency: gatewayHealth.data?.latencyMs,
+              loading: gatewayHealth.isPending,
             },
             {
               label: "Detection Engine",
@@ -683,7 +692,7 @@ function ProxyPage() {
         {/* Mode */}
         <SectionCard
           title="Mode"
-          description="How the proxy processes requests"
+          description="How the gateway processes requests"
         >
           {loading ? (
             <Sk className="h-16 w-full" />
@@ -694,7 +703,7 @@ function ProxyPage() {
                   {
                     id: "gateway" as const,
                     label: "Gateway Mode",
-                    desc: "Transparent proxy — routing, rate limiting, token tracking. No PII scanning. Zero extra dependencies.",
+                    desc: "Transparent gateway — routing, rate limiting, token tracking. No PII scanning. Zero extra dependencies.",
                   },
                   {
                     id: "security" as const,
@@ -1033,7 +1042,7 @@ function ProxyPage() {
                   }
                   onClear={() => clearKeys.mutate({ provider: row.provider })}
                   adding={addKey.isPending}
-                  disabled={isProxyApiConfig}
+                  disabled={isGatewayApiConfig}
                 />
               ))}
             </div>
@@ -1078,7 +1087,7 @@ function ProxyPage() {
               <div className="sm:col-span-2">
                 <Field
                   label="Policy file path"
-                  helper="PROMPTSHIELD_POLICY_PATH — relative to proxy working directory"
+                  helper="PROMPTSHIELD_POLICY_PATH — relative to gateway working directory"
                 >
                   <Input
                     value={policyPath}
@@ -1106,11 +1115,11 @@ function ProxyPage() {
             <span className="font-semibold text-foreground">
               Restart required.
             </span>{" "}
-            Config changes are written to the proxy{" "}
+            Config changes are written to the gateway{" "}
             <code className="rounded bg-muted/60 px-1 font-mono text-[10px]">
               .env
             </code>{" "}
-            file. The proxy must be restarted to pick them up. Policy changes ({" "}
+            file. The gateway must be restarted to pick them up. Policy changes ({" "}
             <code className="rounded bg-muted/60 px-1 font-mono text-[10px]">
               policy.yaml
             </code>{" "}

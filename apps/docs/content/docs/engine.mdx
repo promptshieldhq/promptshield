@@ -3,9 +3,9 @@ title: Engine
 description: Setup guide for the PromptShield detection engine.
 ---
 
-The detection engine is a Python service. It scans prompts and responses for PII and prompt-injection signals, and returns results to the proxy for policy enforcement.
+The detection engine is a Python service. It scans prompts and responses for PII and prompt-injection signals, and returns results to the gateway for policy enforcement.
 
-Run it alongside the proxy. The proxy still works without it (secrets detection and gateway policy controls stay active), but PII and injection scanning require the engine.
+Run it alongside the gateway. The gateway still works without it (secrets detection and gateway policy controls stay active), but PII and injection scanning require the engine.
 
 ## Requirements
 
@@ -48,7 +48,7 @@ PROMPTSHIELD_LOG_LEVEL=INFO
 uv run uvicorn main:app --host 0.0.0.0 --port 4321
 ```
 
-3. Point the proxy and dashboard to this engine URL:
+3. Point the gateway and dashboard to this engine URL:
 
 ```bash
 # promptshield-gateway/.env
@@ -74,19 +74,19 @@ There is no production Compose file in that repository.
 
 By default, the engine requires `PROMPTSHIELD_API_KEY`.
 
-- Recommended: set a key in the engine and set the same value as `PROMPTSHIELD_ENGINE_API_KEY` in the proxy.
+- Recommended: set a key in the engine and set the same value as `PROMPTSHIELD_ENGINE_API_KEY` in the gateway.
 - Local/dev-only: set `PROMPTSHIELD_ALLOW_UNAUTH=true` on the engine to disable auth.
 
-## Connect to the proxy
+## Connect to the gateway
 
-Add to the proxy `.env` and restart:
+Add to the gateway `.env` and restart:
 
 ```bash
 PROMPTSHIELD_ENGINE_URL=http://localhost:4321
 PROMPTSHIELD_ENGINE_API_KEY=your-engine-key
 ```
 
-The proxy will now scan every request before forwarding to the LLM and every response on the way back.
+The gateway will now scan every request before forwarding to the LLM and every response on the way back.
 
 ## Verify
 

@@ -1,9 +1,9 @@
 ---
 title: SDK Integration
-description: Point your existing OpenAI SDK at the proxy. One line change.
+description: Point your existing OpenAI SDK at the gateway. One line change.
 ---
 
-PromptShield accepts the same request format as OpenAI's `/v1/chat/completions`. Point your SDK's `base_url` at the proxy. Nothing else changes.
+PromptShield accepts the same request format as OpenAI's `/v1/chat/completions`. Point your SDK's `base_url` at the gateway. Nothing else changes.
 
 ## Python
 
@@ -39,7 +39,7 @@ The `model` field in the request body is passed through to the upstream. It over
 
 ## Passing API keys at request time
 
-Instead of storing keys in `.env` on the proxy server, pass them per-request via headers. The proxy checks these before falling back to environment variables:
+Instead of storing keys in `.env` on the gateway server, pass them per-request via headers. The gateway checks these before falling back to environment variables:
 
 | Header                        | Used for     |
 | ----------------------------- | ------------ |

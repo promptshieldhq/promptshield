@@ -6,7 +6,7 @@ description: Contributing guide for PromptShield.
 Three repos:
 
 - **Dashboard** (TypeScript/Bun): [promptshieldhq/promptshield](https://github.com/promptshieldhq/promptshield)
-- **Proxy** (Go): [promptshieldhq/promptshield-gateway](https://github.com/promptshieldhq/promptshield-gateway)
+- **Gateway** (Go): [promptshieldhq/promptshield-gateway](https://github.com/promptshieldhq/promptshield-gateway)
 - **Engine** (Python): [promptshieldhq/promptshield-engine](https://github.com/promptshieldhq/promptshield-engine)
 
 ## Before opening a PR
@@ -26,7 +26,7 @@ cp .env.local.example .env.local   # fill in BETTER_AUTH_SECRET
 docker compose -f docker-compose.dev.yml up --build
 ```
 
-**Proxy:**
+**Gateway:**
 
 ```bash
 git clone https://github.com/promptshieldhq/promptshield-gateway

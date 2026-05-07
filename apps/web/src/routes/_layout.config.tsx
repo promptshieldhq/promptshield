@@ -47,25 +47,25 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/* Proxy tab */
-function ProxyTab() {
+/* Gateway tab */
+function GatewayTab() {
   const trpc = useTRPC();
 
-  const urls = useQuery(trpc.proxy.getUrls.queryOptions());
-  const proxyHealth = useQuery(
-    trpc.proxy.health.queryOptions(undefined, { refetchInterval: 20_000 }),
+  const urls = useQuery(trpc.gateway.getUrls.queryOptions());
+  const gatewayHealth = useQuery(
+    trpc.gateway.health.queryOptions(undefined, { refetchInterval: 20_000 }),
   );
-  const checkUrl = useMutation(trpc.proxy.checkUrl.mutationOptions());
-  const saveProxyUrl = useMutation(trpc.proxy.saveProxyUrl.mutationOptions());
-  const resetProxyUrl = useMutation(
-    trpc.proxy.resetProxyUrl.mutationOptions(),
+  const checkUrl = useMutation(trpc.gateway.checkUrl.mutationOptions());
+  const saveGatewayUrl = useMutation(trpc.gateway.saveGatewayUrl.mutationOptions());
+  const resetGatewayUrl = useMutation(
+    trpc.gateway.resetGatewayUrl.mutationOptions(),
   );
   const policySourceInfo = useQuery(trpc.policies.sourceInfo.queryOptions());
   const fileMeta = useQuery(trpc.policies.fileMeta.queryOptions());
   const checkPath = useMutation(trpc.policies.checkFilePath.mutationOptions());
   const savePath = useMutation(trpc.policies.saveFilePath.mutationOptions());
 
-  const [proxyUrl, setProxyUrl] = useState<string | null>(null);
+  const [gatewayUrl, setGatewayUrl] = useState<string | null>(null);
   const [checkedUrl, setCheckedUrl] = useState<{
     online: boolean;
     latencyMs: number | null;
@@ -82,29 +82,29 @@ function ProxyTab() {
     if (path === null && fileMeta.status === "success") setPath(remotePath);
   }, [fileMeta.status, remotePath]);
 
-  const remoteProxyUrl = urls.data?.proxyUrl ?? "";
+  const remoteGatewayUrl = urls.data?.gatewayUrl ?? "";
   useEffect(() => {
-    if (proxyUrl === null && urls.status === "success") {
-      setProxyUrl(remoteProxyUrl);
+    if (gatewayUrl === null && urls.status === "success") {
+      setGatewayUrl(remoteGatewayUrl);
     }
-  }, [proxyUrl, remoteProxyUrl, urls.status]);
+  }, [gatewayUrl, remoteGatewayUrl, urls.status]);
 
-  const editorProxyUrl = proxyUrl ?? remoteProxyUrl;
-  const isProxyDirty =
-    proxyUrl !== null && editorProxyUrl.trim() !== remoteProxyUrl.trim();
+  const editorGatewayUrl = gatewayUrl ?? remoteGatewayUrl;
+  const isGatewayDirty =
+    gatewayUrl !== null && editorGatewayUrl.trim() !== remoteGatewayUrl.trim();
   const editorPath = path ?? remotePath;
   const isDirty = path !== null && path.trim() !== remotePath.trim();
-  const isProxyPolicySource = policySourceInfo.data?.source === "proxy_api";
+  const isGatewayPolicySource = policySourceInfo.data?.source === "gateway_api";
   const isRefreshing =
-    proxyHealth.isFetching ||
+    gatewayHealth.isFetching ||
     fileMeta.isFetching ||
     urls.isFetching ||
     policySourceInfo.isFetching;
 
-  async function handleCheckProxyUrl() {
-    const trimmedUrl = editorProxyUrl.trim();
+  async function handleCheckGatewayUrl() {
+    const trimmedUrl = editorGatewayUrl.trim();
     if (!trimmedUrl) {
-      toast.error("Proxy URL is required");
+      toast.error("Gateway URL is required");
       return;
     }
 
@@ -116,40 +116,40 @@ function ProxyTab() {
       });
       setCheckedUrl(result);
       if (!result.online) {
-        toast.warning("Proxy health check failed");
+        toast.warning("Gateway health check failed");
       }
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to validate proxy URL"));
+      toast.error(getErrorMessage(error, "Failed to validate gateway URL"));
     }
   }
 
-  async function handleSaveProxyUrl() {
-    const trimmedUrl = editorProxyUrl.trim();
+  async function handleSaveGatewayUrl() {
+    const trimmedUrl = editorGatewayUrl.trim();
     if (!trimmedUrl) {
-      toast.error("Proxy URL is required");
+      toast.error("Gateway URL is required");
       return;
     }
 
     try {
-      await saveProxyUrl.mutateAsync({ url: trimmedUrl });
-      toast.success("Proxy URL saved");
-      setProxyUrl(null);
+      await saveGatewayUrl.mutateAsync({ url: trimmedUrl });
+      toast.success("Gateway URL saved");
+      setGatewayUrl(null);
       setCheckedUrl(null);
-      await Promise.all([urls.refetch(), proxyHealth.refetch()]);
+      await Promise.all([urls.refetch(), gatewayHealth.refetch()]);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to save proxy URL"));
+      toast.error(getErrorMessage(error, "Failed to save gateway URL"));
     }
   }
 
-  async function handleResetProxyUrl() {
+  async function handleResetGatewayUrl() {
     try {
-      await resetProxyUrl.mutateAsync();
-      toast.success("Proxy URL override cleared");
-      setProxyUrl(null);
+      await resetGatewayUrl.mutateAsync();
+      toast.success("Gateway URL override cleared");
+      setGatewayUrl(null);
       setCheckedUrl(null);
-      await Promise.all([urls.refetch(), proxyHealth.refetch()]);
+      await Promise.all([urls.refetch(), gatewayHealth.refetch()]);
     } catch (error) {
-      toast.error(getErrorMessage(error, "Failed to reset proxy URL"));
+      toast.error(getErrorMessage(error, "Failed to reset gateway URL"));
     }
   }
 
@@ -197,7 +197,7 @@ function ProxyTab() {
         <button
           onClick={() => {
             urls.refetch();
-            proxyHealth.refetch();
+            gatewayHealth.refetch();
             fileMeta.refetch();
             setCheckedUrl(null);
             setChecked(null);
@@ -214,49 +214,49 @@ function ProxyTab() {
         </button>
       </div>
 
-      {/* Proxy status card */}
+      {/* Gateway status card */}
       <div className="rounded-lg border border-border bg-card px-4 py-3.5">
         <div className="flex items-start justify-between">
-          <p className="text-xs font-semibold text-foreground">Proxy</p>
-          {proxyHealth.isPending ? (
+          <p className="text-xs font-semibold text-foreground">Gateway</p>
+          {gatewayHealth.isPending ? (
             <Sk className="h-5 w-14 rounded-full" />
           ) : (
             <span
               className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
-                proxyHealth.data?.online
+                gatewayHealth.data?.online
                   ? "border-success/25 bg-success/10 text-success"
                   : "border-destructive/25 bg-destructive/10 text-destructive"
               }`}
             >
               <span
-                className={`h-1.5 w-1.5 rounded-full ${proxyHealth.data?.online ? "bg-success motion-safe:animate-pulse" : "bg-destructive"}`}
+                className={`h-1.5 w-1.5 rounded-full ${gatewayHealth.data?.online ? "bg-success motion-safe:animate-pulse" : "bg-destructive"}`}
                 aria-hidden="true"
               />
-              {proxyHealth.data?.online ? "Online" : "Offline"}
+              {gatewayHealth.data?.online ? "Online" : "Offline"}
             </span>
           )}
         </div>
         <p className="mt-2 font-mono text-[11px] text-muted-foreground/60 break-all">
-          {proxyHealth.data?.url ?? "Not configured"}
+          {gatewayHealth.data?.url ?? "Not configured"}
         </p>
-        {proxyHealth.data?.latencyMs != null && (
+        {gatewayHealth.data?.latencyMs != null && (
           <p className="mt-0.5 font-mono text-[10px] tabular-nums text-muted-foreground/40">
-            {proxyHealth.data.latencyMs}ms
+            {gatewayHealth.data.latencyMs}ms
           </p>
         )}
       </div>
 
-      {/* Proxy URL configuration */}
+      {/* Gateway URL configuration */}
       <div className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="border-b border-border px-5 py-3">
           <div className="flex items-center gap-2">
             <Server size={13} className="text-muted-foreground" aria-hidden="true" />
             <div>
               <h2 className="text-xs font-semibold text-foreground">
-                Proxy Service URL
+                Gateway Service URL
               </h2>
               <p className="mt-0.5 text-[11px] text-muted-foreground/60">
-                Base URL used by the dashboard to reach PromptShield proxy
+                Base URL used by the dashboard to reach PromptShield gateway
               </p>
             </div>
           </div>
@@ -267,56 +267,56 @@ function ProxyTab() {
             <Sk className="h-4 w-64" />
           ) : (
             <div className="space-y-1 text-[10px] text-muted-foreground/60">
-              <p className="font-mono break-all">Current: {urls.data?.proxyUrl ?? "—"}</p>
+              <p className="font-mono break-all">Current: {urls.data?.gatewayUrl ?? "—"}</p>
               <p>Deployment URL is used when no override is set.</p>
             </div>
           )}
 
           <div className="space-y-2">
             <label className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-              Update proxy URL
+              Update gateway URL
             </label>
             <div className="flex items-center gap-2">
               <input
-                value={editorProxyUrl}
+                value={editorGatewayUrl}
                 onChange={(e) => {
-                  setProxyUrl(e.target.value);
+                  setGatewayUrl(e.target.value);
                   setCheckedUrl(null);
                 }}
-                onKeyDown={(e) => e.key === "Enter" && handleCheckProxyUrl()}
-                placeholder="https://proxy.your-domain.com"
+                onKeyDown={(e) => e.key === "Enter" && handleCheckGatewayUrl()}
+                placeholder="https://gateway.your-domain.com"
                 className="w-full rounded-md border border-border bg-background px-3 py-2 font-mono text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 spellCheck={false}
               />
               <button
-                onClick={handleCheckProxyUrl}
+                onClick={handleCheckGatewayUrl}
                 disabled={
-                  !editorProxyUrl.trim() ||
+                  !editorGatewayUrl.trim() ||
                   checkUrl.isPending ||
-                  saveProxyUrl.isPending ||
-                  resetProxyUrl.isPending
+                  saveGatewayUrl.isPending ||
+                  resetGatewayUrl.isPending
                 }
                 className="shrink-0 rounded-md border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
               >
                 {checkUrl.isPending ? "Checking..." : "Validate"}
               </button>
               <button
-                onClick={handleSaveProxyUrl}
+                onClick={handleSaveGatewayUrl}
                 disabled={
-                  saveProxyUrl.isPending ||
+                  saveGatewayUrl.isPending ||
                   checkUrl.isPending ||
-                  resetProxyUrl.isPending ||
-                  !isProxyDirty
+                  resetGatewayUrl.isPending ||
+                  !isGatewayDirty
                 }
                 className="shrink-0 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
-                {saveProxyUrl.isPending ? "Saving..." : "Save"}
+                {saveGatewayUrl.isPending ? "Saving..." : "Save"}
               </button>
               <button
-                onClick={handleResetProxyUrl}
+                onClick={handleResetGatewayUrl}
                 disabled={
-                  resetProxyUrl.isPending ||
-                  saveProxyUrl.isPending ||
+                  resetGatewayUrl.isPending ||
+                  saveGatewayUrl.isPending ||
                   checkUrl.isPending
                 }
                 className="shrink-0 flex items-center gap-1 rounded-md border border-border px-2.5 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
@@ -355,7 +355,7 @@ function ProxyTab() {
                     aria-hidden="true"
                   />
                   <p className="text-[11px] text-destructive font-medium">
-                    Could not reach the proxy health endpoint
+                    Could not reach the gateway health endpoint
                   </p>
                 </>
               )}
@@ -378,23 +378,23 @@ function ProxyTab() {
                 Policy File Path
               </h2>
               <p className="mt-0.5 text-[11px] text-muted-foreground/60">
-                {isProxyPolicySource
-                  ? "Managed by external proxy API in this environment"
-                  : "Where the proxy reads policy.yaml from"}
+                {isGatewayPolicySource
+                  ? "Managed by external gateway API in this environment"
+                  : "Where the gateway reads policy.yaml from"}
               </p>
             </div>
           </div>
         </div>
 
         <div className="space-y-4 p-5">
-          {isProxyPolicySource && (
+          {isGatewayPolicySource && (
             <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5">
               <p className="text-[11px] text-primary/90">
-                Path overrides are disabled because <span className="font-mono">POLICY_SOURCE=proxy_api</span>.
+                Path overrides are disabled because <span className="font-mono">POLICY_SOURCE=gateway_api</span>.
               </p>
-              {policySourceInfo.data?.proxyPolicyEndpoint && (
+              {policySourceInfo.data?.gatewayPolicyEndpoint && (
                 <p className="mt-1 font-mono text-[10px] text-muted-foreground/60 break-all">
-                  {policySourceInfo.data.proxyPolicyEndpoint}
+                  {policySourceInfo.data.gatewayPolicyEndpoint}
                 </p>
               )}
             </div>
@@ -470,7 +470,7 @@ function ProxyTab() {
               <button
                 onClick={handleCheck}
                 disabled={
-                  isProxyPolicySource ||
+                  isGatewayPolicySource ||
                   !editorPath.trim() ||
                   checkPath.isPending ||
                   savePath.isPending
@@ -482,7 +482,7 @@ function ProxyTab() {
               <button
                 onClick={handleSave}
                 disabled={
-                  isProxyPolicySource ||
+                  isGatewayPolicySource ||
                   savePath.isPending ||
                   checkPath.isPending ||
                   !isDirty ||
@@ -538,7 +538,7 @@ function ProxyTab() {
 
         <div className="border-t border-border/50 bg-muted/10 px-5 py-2">
           <p className="text-[10px] text-muted-foreground/40">
-            The proxy hot-reloads <code className="font-mono">policy.yaml</code>{" "}
+            The gateway hot-reloads <code className="font-mono">policy.yaml</code>{" "}
             on every change — no restart needed.
           </p>
         </div>
@@ -551,18 +551,18 @@ function ProxyTab() {
 function EngineTab() {
   const trpc = useTRPC();
 
-  const urls = useQuery(trpc.proxy.getUrls.queryOptions());
+  const urls = useQuery(trpc.gateway.getUrls.queryOptions());
   const engineHealth = useQuery(
-    trpc.proxy.engineHealth.queryOptions(undefined, {
+    trpc.gateway.engineHealth.queryOptions(undefined, {
       refetchInterval: 20_000,
     }),
   );
-  const checkUrl = useMutation(trpc.proxy.checkUrl.mutationOptions());
+  const checkUrl = useMutation(trpc.gateway.checkUrl.mutationOptions());
   const saveEngineUrl = useMutation(
-    trpc.proxy.saveEngineUrl.mutationOptions(),
+    trpc.gateway.saveEngineUrl.mutationOptions(),
   );
   const resetEngineUrl = useMutation(
-    trpc.proxy.resetEngineUrl.mutationOptions(),
+    trpc.gateway.resetEngineUrl.mutationOptions(),
   );
 
   const [engineUrl, setEngineUrl] = useState<string | null>(null);
@@ -837,23 +837,26 @@ function EngineTab() {
 }
 
 /* Page */
-type Tab = "proxy" | "engine";
+type Tab = "gateway" | "engine";
 
 function ConfigPage() {
-  const [tab, setTab] = useState<Tab>("proxy");
+  const [tab, setTab] = useState<Tab>("gateway");
 
   const tabs: { id: Tab; label: string; Icon: typeof Server }[] = [
-    { id: "proxy", label: "Proxy", Icon: Server },
+    { id: "gateway", label: "Gateway", Icon: Server },
     { id: "engine", label: "Detection Engine", Icon: SlidersHorizontal },
   ];
 
   return (
     <div className="flex min-h-full flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="flex h-[52px] items-center px-6">
-          <h1 className="text-sm font-semibold text-foreground">
-            Configuration
+      <header className="sticky top-0 z-10 border-b border-[var(--dev-border)] bg-[var(--dev-bg)]/95 backdrop-blur-sm">
+        <div className="flex h-[52px] items-center gap-3 px-6">
+          <span className="mono text-[10px] uppercase tracking-widest text-[var(--dev-text-mute)]">
+            ~/
+          </span>
+          <h1 className="mono text-[13px] font-semibold text-[var(--dev-text)]">
+            config
           </h1>
         </div>
         {/* Tab bar */}
@@ -864,14 +867,14 @@ function ConfigPage() {
               <button
                 key={id}
                 onClick={() => setTab(id)}
-                className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium transition-colors ${
+                className={`mono flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-[11px] font-medium uppercase tracking-widest transition-colors ${
                   active
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "border-[var(--dev-accent)] text-[var(--dev-text)]"
+                    : "border-transparent text-[var(--dev-text-mute)] hover:text-[var(--dev-text)]"
                 }`}
               >
                 <Icon size={12} aria-hidden="true" />
-                {label}
+                {label.toLowerCase()}
               </button>
             );
           })}
@@ -879,7 +882,7 @@ function ConfigPage() {
       </header>
 
       <div className="mx-auto w-full max-w-3xl p-6">
-        {tab === "proxy" && <ProxyTab />}
+        {tab === "gateway" && <GatewayTab />}
         {tab === "engine" && <EngineTab />}
       </div>
     </div>

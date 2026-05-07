@@ -240,10 +240,10 @@ export const dashboardRouter = router({
     }
   }),
 
-  proxyStatus: protectedProcedure.query(async () => {
+  gatewayStatus: protectedProcedure.query(async () => {
     const start = Date.now();
     try {
-      const res = await fetch(`${env.PROXY_URL}/health`, {
+      const res = await fetch(`${env.GATEWAY_URL}/health`, {
         signal: AbortSignal.timeout(3000),
       });
       return { online: res.ok, latencyMs: Date.now() - start };

@@ -45,11 +45,11 @@ Five alert rules in `infra/observability/grafana/alerts.yml`:
 
 To route alerts to Slack, PagerDuty, or email, add an Alertmanager config alongside the docker-compose file.
 
-## Reaching the proxy from Docker
+## Reaching the gateway from Docker
 
-The compose file uses `host.docker.internal` so Prometheus can scrape the proxy on your host. Works on Docker Desktop (Mac, Windows) and Linux with Docker Engine 20.10+.
+The compose file uses `host.docker.internal` so Prometheus can scrape the gateway on your host. Works on Docker Desktop (Mac, Windows) and Linux with Docker Engine 20.10+.
 
-If the proxy is on a different host, edit `infra/observability/prometheus.yml`:
+If the gateway is on a different host, edit `infra/observability/prometheus.yml`:
 
 ```yaml
 scrape_configs:
