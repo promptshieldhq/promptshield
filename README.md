@@ -274,7 +274,7 @@ Prompts never leave your infrastructure. No external API calls for detection.
   </a>
 </p>
 
-- [Discord](https://discord.gg/gJbYyhJU) - questions and live chat
+- [Discord](https://discord.gg/b4MbmyQaDA) - questions and live chat
 - [GitHub Discussions](https://github.com/orgs/promptshieldhq/discussions) - ideas, RFCs, design decisions
 
 ---
