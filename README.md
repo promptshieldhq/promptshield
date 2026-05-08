@@ -30,6 +30,8 @@ Components:
 > **Note:** Only the gateway is required. The detection engine and dashboard are optional. Gateway-only mode includes built-in secret detection (150+ Gitleaks rules), rate limiting, token budgets, and audit logging. Add the engine for PII and injection detection.
 
 
+<img src="./apps/docs/public/images/dashboard/onboard.png" alt="Login Page" />
+
 <img src="./apps/docs/public/images/dashboard/dashboard.png" alt="PromptShield dashboard" />
 
 
